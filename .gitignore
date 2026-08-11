@@ -1,0 +1,16 @@
+# Environment variables containing sensitive keys
+.env
+
+# Terraform temporary/state directories
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*localstack_override.tf
+
+# Python build and cache directories
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/

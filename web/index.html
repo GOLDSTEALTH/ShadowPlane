@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShadowPlane Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="background-mesh"></div>
+    
+    <header class="glass-panel">
+        <div class="logo">
+            <span class="gradient-text">ShadowPlane</span>
+            <span class="badge">CI/CD Interceptor</span>
+        </div>
+        <div class="header-controls">
+            <div class="status-indicator">
+                <span class="dot" id="system-status-dot"></span>
+                <span id="system-status-text">System Idle</span>
+            </div>
+            <button id="theme-toggle" class="icon-btn" aria-label="Toggle Theme">
+                <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="dashboard-grid">
+        <!-- Left Column: Controls & Timeline -->
+        <div class="left-col">
+            <section class="glass-panel control-hub">
+                <h2>Control Hub</h2>
+                <div class="run-info">
+                    <p>Target: <code>demo-infra/</code></p>
+                    <p>Max Retries: <code>5</code></p>
+                </div>
+                <button id="btn-trigger" class="btn-primary">
+                    <span class="btn-text">Trigger Autonomous Verification</span>
+                    <span class="btn-glow"></span>
+                </button>
+            </section>
+
+            <section class="glass-panel timeline-panel">
+                <h2>Autonomous Timeline</h2>
+                <div class="timeline">
+                    <div class="timeline-step" id="step-preflight">
+                        <div class="step-icon"></div>
+                        <div class="step-content">
+                            <h3>Pre-flight</h3>
+                            <p>Resetting state & injecting failure.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-step" id="step-attempt1">
+                        <div class="step-icon"></div>
+                        <div class="step-content">
+                            <h3>Attempt 1</h3>
+                            <p>Deploying infrastructure...</p>
+                        </div>
+                    </div>
+                    <div class="timeline-step" id="step-analysis">
+                        <div class="step-icon"></div>
+                        <div class="step-content">
+                            <h3>Analysis & Healing</h3>
+                            <p>Inspecting logs and patching code.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-step" id="step-attempt2">
+                        <div class="step-icon"></div>
+                        <div class="step-content">
+                            <h3>Attempt 2</h3>
+                            <p>Re-deploying patched infrastructure...</p>
+                        </div>
+                    </div>
+                    <div class="timeline-step" id="step-success">
+                        <div class="step-icon"></div>
+                        <div class="step-content">
+                            <h3>Success</h3>
+                            <p>Verification Passed. Blast radius contained.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Right Column: Terminal & Diff -->
+        <div class="right-col">
+            <section class="glass-panel terminal-wrapper">
+                <div class="terminal-header">
+                    <div class="mac-buttons">
+                        <span></span><span></span><span></span>
+                    </div>
+                    <span class="terminal-title">Live Execution Logs</span>
+                </div>
+                <div class="terminal-body" id="terminal-output">
+                    <span class="log-info">System ready. Waiting for trigger...</span>
+                </div>
+            </section>
+
+            <section class="glass-panel diff-wrapper">
+                <h2>Self-Healing Inspector</h2>
+                <div class="diff-container" id="diff-viewer">
+                    <div class="diff-placeholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-50 mb-4"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="m9 15 2 2 4-4"></path></svg>
+                        <p>No patches applied yet.<br>Wait for a failure analysis.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
