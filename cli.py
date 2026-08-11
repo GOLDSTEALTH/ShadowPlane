@@ -39,6 +39,15 @@ import demo_loop  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
+# Version resolution
+# ---------------------------------------------------------------------------
+VERSION = os.environ.get("SHADOWPLANE_VERSION", "unknown")
+version_file = os.path.join(PROJECT_ROOT, "VERSION")
+if os.path.isfile(version_file):
+    with open(version_file, "r", encoding="utf-8") as f:
+        VERSION = f.read().strip()
+
+# ---------------------------------------------------------------------------
 # CI-friendly output formatting
 # ---------------------------------------------------------------------------
 # GitHub Actions log grouping commands
@@ -113,6 +122,12 @@ Examples:
         default=5,
         help="Maximum self-healing retry attempts before failing (default: 5)",
     )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"ShadowPlane Gatekeeper v{VERSION}",
+        help="Show the version and exit",
+    )
     return parser.parse_args()
 
 
@@ -122,6 +137,7 @@ async def run(args):
 
     # ── Header ────────────────────────────────────────────────────────────
     banner("ShadowPlane Autonomous Verification Pipeline", char="=")
+    print(f"  Version          : v{VERSION}")
     print(f"  Target Directory : {target}")
     print(f"  Max Retries      : {args.max_retries}")
     print(f"  CI Environment   : {'GitHub Actions' if IS_GITHUB_ACTIONS else 'Standard'}")

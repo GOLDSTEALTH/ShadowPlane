@@ -58,6 +58,7 @@ COPY --from=builder /build/deps /usr/local/lib/python3.13/site-packages/
 WORKDIR /app
 
 # Copy only what's needed for the headless CLI pipeline
+COPY VERSION .
 COPY cli.py .
 COPY demo_loop.py .
 COPY server.py .
@@ -67,6 +68,8 @@ COPY demo-infra/ ./demo-infra/
 COPY .env* ./
 
 # -- Environment defaults ----------------------------------------------------
+ARG VERSION="unknown"
+ENV SHADOWPLANE_VERSION=${VERSION}
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV AWS_ACCESS_KEY_ID=mock
