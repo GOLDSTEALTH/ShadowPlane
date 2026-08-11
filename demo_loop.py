@@ -183,11 +183,29 @@ async def fix_main_tf(error_text: str, yield_event=None) -> bool:
 # Main autonomous loop
 # ---------------------------------------------------------------------------
 
-async def main(yield_event=None):
-    global RUN_ID, FIXED_BUCKET
-    # Regenerate RUN_ID on each invocation so web UI triggers get fresh state
+async def main(yield_event=None, target_dir=None, max_retries=None):
+    """
+    Run the autonomous verification loop.
+
+    Args:
+        yield_event: Optional async callback for streaming events to web UI.
+        target_dir:  Path to the Terraform directory (default: demo-infra/).
+        max_retries: Maximum retry attempts (default: 5).
+
+    Returns:
+        True if verification passed, False otherwise.
+    """
+    global RUN_ID, FIXED_BUCKET, DEMO_INFRA_DIR, MAIN_TF_PATH, MAX_RETRIES
+    # Regenerate RUN_ID on each invocation
     RUN_ID = uuid.uuid4().hex[:6]
     FIXED_BUCKET = f"shadowplane-demo-{RUN_ID}"
+
+    # Allow caller overrides
+    if target_dir is not None:
+        DEMO_INFRA_DIR = os.path.abspath(target_dir)
+        MAIN_TF_PATH = os.path.join(DEMO_INFRA_DIR, "main.tf")
+    if max_retries is not None:
+        MAX_RETRIES = max_retries
 
     divider = "=" * 67
     thin    = "-" * 55
@@ -206,6 +224,8 @@ async def main(yield_event=None):
     await reset_main_tf(yield_event)
     await _log(yield_event, "")
 
+    success = False
+
     for attempt in range(1, MAX_RETRIES + 1):
         if attempt == 1:
             await _emit(yield_event, {"type": "step", "step": "attempt1"})
@@ -223,10 +243,11 @@ async def main(yield_event=None):
 
             await _log(yield_event, f"\n+{divider}+")
             await _log(yield_event, "|                                                                    |")
-            await _log(yield_event, "|  ✅  ShadowPlane Verification Passed.                              |", "success")
-            await _log(yield_event, "|      Blast Radius Contained. Generating PR.                        |")
+            await _log(yield_event, "|  [PASS] ShadowPlane Verification Passed.                           |", "success")
+            await _log(yield_event, "|        Blast Radius Contained. Generating PR.                      |")
             await _log(yield_event, "|                                                                    |")
             await _log(yield_event, f"+{divider}+\n")
+            success = True
             break
 
         except Exception as deploy_err:
@@ -253,5 +274,9 @@ async def main(yield_event=None):
             else:
                 await _log(yield_event, f"+--- [HALT] Max retries ({MAX_RETRIES}) reached. Verification failed.\n", "error")
 
+    return success
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    result = asyncio.run(main())
+    sys.exit(0 if result else 1)
+

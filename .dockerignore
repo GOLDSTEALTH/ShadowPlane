@@ -1,0 +1,38 @@
+# Git
+.git/
+.gitignore
+
+# Environment secrets (injected at runtime, not baked in)
+.env
+
+# Terraform state (ephemeral, generated at runtime)
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*localstack_override.tf
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Web UI (not needed for headless CLI)
+web/
+web_server.py
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Agents / Skills metadata
+.agents/
+skills/
+
+# Documentation
+*.md
+LICENSE

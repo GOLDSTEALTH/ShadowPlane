@@ -1,3 +1,7 @@
 mcp[cli]
 fastmcp
 docker
+fastapi
+uvicorn
+httpx
+websockets
