@@ -1,3 +1,4 @@
+import json
 import logging
 import sys
 import os
@@ -138,30 +139,22 @@ def ensure_localstack_sync():
     if not port_ready:
         logger.warning("LocalStack port 4566 did not become ready in 30 seconds. Continuing anyway.")
 
-def run_terraform_deploy_sync(terraform_dir: str, deployment_id: str) -> str:
-    """Sync helper to execute terraform commands."""
-    # Ensure LocalStack is up and running
-    ensure_localstack_sync()
-    
-    # Configure environment variables to redirect AWS calls to LocalStack
-    env = os.environ.copy()
-    env["AWS_ACCESS_KEY_ID"] = "mock"
-    env["AWS_SECRET_ACCESS_KEY"] = "mock"
-    env["AWS_DEFAULT_REGION"] = "us-east-1"
-    env["AWS_ENDPOINT_URL"] = "http://localhost:4566"
-    env["AWS_ENDPOINT_URL_S3"] = "http://localhost:4566"
-    env["AWS_ENDPOINT_URL_DYNAMODB"] = "http://localhost:4566"
-    env["AWS_ENDPOINT_URL_SQS"] = "http://localhost:4566"
-    env["AWS_ENDPOINT_URL_SNS"] = "http://localhost:4566"
-    env["AWS_ENDPOINT_URL_LAMBDA"] = "http://localhost:4566"
-    env["AWS_ENDPOINT_URL_IAM"] = "http://localhost:4566"
-    env["AWS_ENDPOINT_URL_STS"] = "http://localhost:4566"
-    env["AWS_ENDPOINT_URL_EC2"] = "http://localhost:4566"
-    env["AWS_EC2_METADATA_DISABLED"] = "true"
-    
-    # Write localstack override file to ensure all resources default to localstack endpoints
-    override_file = os.path.join(terraform_dir, "localstack_override.tf")
-    override_content = """
+class TerraformExecutor:
+    """
+    Encapsulates all Terraform execution logic for the ShadowPlane sandbox.
+
+    Responsibilities:
+      - Injects LocalStack-targeting environment variables (Prompt 2)
+      - Executes `terraform init` and `terraform apply -auto-approve -json` (Prompts 1, 3, 4)
+      - Enforces a strict 60-second timeout per subprocess call (Prompt 1)
+      - Returns a structured dict: {'success': bool, 'exit_code': int, 'error_log': str,
+        'stdout': str, 'errors': list[dict]} (Prompts 1, 4)
+    """
+
+    LOCALSTACK_ENDPOINT = "http://localhost:4566"
+    TIMEOUT_SECONDS = 60
+
+    LOCALSTACK_OVERRIDE_TF = """\
 provider "aws" {
   access_key                  = "mock"
   secret_key                  = "mock"
@@ -204,48 +197,226 @@ provider "aws" {
   }
 }
 """
-    try:
-        with open(override_file, "w") as f:
-            f.write(override_content)
-            
-        logger.info("Running 'terraform init' in %s", terraform_dir)
-        init_res = subprocess.run(
-            ["terraform", "init"],
-            cwd=terraform_dir,
-            capture_output=True,
-            text=True,
-            env=env,
-            check=True
-        )
-        
-        logger.info("Running 'terraform apply -auto-approve' in %s", terraform_dir)
-        apply_res = subprocess.run(
-            ["terraform", "apply", "-auto-approve"],
-            cwd=terraform_dir,
-            capture_output=True,
-            text=True,
-            env=env,
-            check=True
-        )
-        
-        # Save success logs
-        store_log(deployment_id, terraform_dir, apply_res.stdout, "")
-        return apply_res.stdout
 
-    except subprocess.CalledProcessError as e:
-        logger.error("Terraform execution failed command=%s returncode=%d", e.cmd, e.returncode)
-        # Store fail logs
-        stdout_val = e.stdout or ""
-        stderr_val = e.stderr or f"Terraform command {e.cmd} failed with exit code {e.returncode}"
-        store_log(deployment_id, terraform_dir, stdout_val, stderr_val)
-        raise RuntimeError(f"Terraform execution failed: {stderr_val}")
-    finally:
-        # Clean up the override file so we don't contaminate the directory
-        if os.path.exists(override_file):
+    def __init__(self, terraform_dir: str, deployment_id: str):
+        self.terraform_dir = terraform_dir
+        self.deployment_id = deployment_id
+        self.override_file = os.path.join(terraform_dir, "localstack_override.tf")
+
+    def _build_env(self) -> dict:
+        """Build an environment dict that forces all AWS calls to LocalStack."""
+        env = os.environ.copy()
+        env["AWS_ACCESS_KEY_ID"] = "mock"
+        env["AWS_SECRET_ACCESS_KEY"] = "mock"
+        env["AWS_DEFAULT_REGION"] = "us-east-1"
+        # Force every AWS SDK / CLI / Terraform provider to target LocalStack
+        for svc in ("", "S3", "DYNAMODB", "SQS", "SNS", "LAMBDA",
+                    "IAM", "STS", "EC2"):
+            key = f"AWS_ENDPOINT_URL_{svc}" if svc else "AWS_ENDPOINT_URL"
+            env[key] = self.LOCALSTACK_ENDPOINT
+        env["AWS_EC2_METADATA_DISABLED"] = "true"
+        return env
+
+    def _write_override(self):
+        """Write the LocalStack provider override file into the Terraform dir."""
+        with open(self.override_file, "w", encoding="utf-8") as f:
+            f.write(self.LOCALSTACK_OVERRIDE_TF)
+
+    def _cleanup_override(self):
+        """Remove the temporary override file."""
+        if os.path.exists(self.override_file):
             try:
-                os.remove(override_file)
+                os.remove(self.override_file)
             except Exception as ex:
                 logger.warning("Failed to remove temporary override file: %s", ex)
+
+    @staticmethod
+    def _parse_json_errors(raw_output: str) -> list[dict]:
+        """
+        Parse newline-delimited JSON output from `terraform apply -json`.
+        Extracts structured error diagnostics with AWS API error codes.
+
+        Returns a list of dicts, each containing:
+          - type: the Terraform log level (e.g., "diagnostic")
+          - severity: "error" | "warning"
+          - summary: short error description
+          - detail: full error detail string
+          - resource: the Terraform resource address (if available)
+        """
+        errors = []
+        for line in raw_output.strip().splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+            # Terraform JSON output uses @level and @message at the top level,
+            # and nests diagnostic info under "diagnostic" for errors.
+            if entry.get("type") == "diagnostic":
+                diag = entry.get("diagnostic", {})
+                if diag.get("severity") == "error":
+                    errors.append({
+                        "type": "diagnostic",
+                        "severity": "error",
+                        "summary": diag.get("summary", ""),
+                        "detail": diag.get("detail", ""),
+                        "resource": diag.get("address", ""),
+                    })
+            elif entry.get("@level") == "error":
+                errors.append({
+                    "type": "message",
+                    "severity": "error",
+                    "summary": entry.get("@message", ""),
+                    "detail": entry.get("@message", ""),
+                    "resource": "",
+                })
+        return errors
+
+    def execute(self) -> dict:
+        """
+        Run `terraform init` then `terraform apply -auto-approve -json`.
+
+        Returns:
+            dict: {
+                'success':   bool  — True if apply exited 0,
+                'exit_code': int   — process return code (or -1 on timeout),
+                'error_log': str   — raw stderr / error text,
+                'stdout':    str   — raw stdout,
+                'errors':    list  — parsed JSON error diagnostics,
+            }
+        """
+        # Ensure LocalStack is up
+        ensure_localstack_sync()
+
+        env = self._build_env()
+        self._write_override()
+
+        try:
+            # ── terraform init ────────────────────────────────────────────
+            logger.info("Running 'terraform init' in %s", self.terraform_dir)
+            init_res = subprocess.run(
+                ["terraform", "init"],
+                cwd=self.terraform_dir,
+                capture_output=True,
+                text=True,
+                env=env,
+                timeout=self.TIMEOUT_SECONDS,
+                check=True,
+            )
+
+            # ── terraform apply -auto-approve -json ───────────────────────
+            logger.info("Running 'terraform apply -auto-approve -json' in %s", self.terraform_dir)
+            apply_res = subprocess.run(
+                ["terraform", "apply", "-auto-approve", "-json"],
+                cwd=self.terraform_dir,
+                capture_output=True,
+                text=True,
+                env=env,
+                timeout=self.TIMEOUT_SECONDS,
+            )
+
+            parsed_errors = self._parse_json_errors(apply_res.stdout)
+
+            if apply_res.returncode != 0:
+                error_log = apply_res.stderr or apply_res.stdout
+                # Also build a human-readable summary from JSON diagnostics
+                if parsed_errors:
+                    error_summary = "\n".join(
+                        f"{e['summary']}: {e['detail']}" for e in parsed_errors
+                    )
+                    error_log = error_summary
+
+                logger.error(
+                    "Terraform apply failed: returncode=%d, errors=%d",
+                    apply_res.returncode, len(parsed_errors),
+                )
+                store_log(
+                    self.deployment_id, self.terraform_dir,
+                    apply_res.stdout, error_log,
+                )
+                return {
+                    "success": False,
+                    "exit_code": apply_res.returncode,
+                    "error_log": error_log,
+                    "stdout": apply_res.stdout,
+                    "errors": parsed_errors,
+                }
+
+            # Success path
+            store_log(self.deployment_id, self.terraform_dir, apply_res.stdout, "")
+            return {
+                "success": True,
+                "exit_code": 0,
+                "error_log": "",
+                "stdout": apply_res.stdout,
+                "errors": [],
+            }
+
+        except subprocess.TimeoutExpired as te:
+            error_msg = (
+                f"Terraform command timed out after {self.TIMEOUT_SECONDS}s: {te.cmd}"
+            )
+            logger.error(error_msg)
+            store_log(self.deployment_id, self.terraform_dir, "", error_msg)
+            return {
+                "success": False,
+                "exit_code": -1,
+                "error_log": error_msg,
+                "stdout": "",
+                "errors": [{"type": "timeout", "severity": "error",
+                            "summary": "Execution timed out",
+                            "detail": error_msg, "resource": ""}],
+            }
+
+        except subprocess.CalledProcessError as e:
+            # This catches `terraform init` failures (check=True)
+            logger.error(
+                "Terraform execution failed: command=%s returncode=%d", e.cmd, e.returncode
+            )
+            stderr_val = e.stderr or f"Terraform command {e.cmd} failed with exit code {e.returncode}"
+            store_log(self.deployment_id, self.terraform_dir, e.stdout or "", stderr_val)
+            return {
+                "success": False,
+                "exit_code": e.returncode,
+                "error_log": stderr_val,
+                "stdout": e.stdout or "",
+                "errors": [{"type": "process_error", "severity": "error",
+                            "summary": f"Command failed: {e.cmd}",
+                            "detail": stderr_val, "resource": ""}],
+            }
+
+        except Exception as ex:
+            error_msg = f"Unexpected error during Terraform execution: {ex}"
+            logger.error(error_msg)
+            store_log(self.deployment_id, self.terraform_dir, "", error_msg)
+            return {
+                "success": False,
+                "exit_code": -1,
+                "error_log": error_msg,
+                "stdout": "",
+                "errors": [{"type": "exception", "severity": "error",
+                            "summary": type(ex).__name__,
+                            "detail": error_msg, "resource": ""}],
+            }
+
+        finally:
+            self._cleanup_override()
+
+
+def run_terraform_deploy_sync(terraform_dir: str, deployment_id: str) -> str:
+    """
+    Legacy sync wrapper — delegates to TerraformExecutor.
+    Preserves backward compatibility with clone_and_deploy MCP tool.
+    Raises RuntimeError on failure (as before).
+    """
+    executor = TerraformExecutor(terraform_dir, deployment_id)
+    result = executor.execute()
+    if result["success"]:
+        return result["stdout"]
+    raise RuntimeError(f"Terraform execution failed: {result['error_log']}")
 
 @mcp.tool()
 async def clone_and_deploy(terraform_dir: str) -> str:
