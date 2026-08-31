@@ -21,6 +21,9 @@ import stat
 import sys
 import uuid
 
+from google import genai
+from google.genai import types
+
 # Force UTF-8 output so box-drawing chars and emoji survive Windows terminals
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
@@ -136,48 +139,116 @@ async def reset_main_tf(yield_event=None):
     await _log(yield_event, f"  [INFO]  Run ID = {RUN_ID}  |  Fixed bucket will be = {FIXED_BUCKET!r}")
 
 # ---------------------------------------------------------------------------
-# Self-healing patch engine
+# Self-healing patch engine (Gemini AI-powered)
 # ---------------------------------------------------------------------------
 
+GEMINI_MODEL = "gemini-3.7-flash"
+
+SYSTEM_INSTRUCTION = (
+    "You are an expert AWS Terraform engineer. Fix the provided Terraform code "
+    "to resolve the AWS API error. You must return ONLY the raw, valid HCL code. "
+    "Do not include markdown formatting, backticks (```hcl), explanations, or "
+    "apologies. Your exact output will be written directly to disk."
+)
+
+
+def _sanitize_hcl(raw: str) -> str:
+    """
+    Strip markdown code fences and language tags from LLM output.
+    LLMs frequently wrap code in ```hcl ... ``` despite instructions not to.
+    """
+    text = raw.strip()
+    # Remove leading ```hcl, ```terraform, or bare ```
+    text = re.sub(r"^```(?:hcl|terraform|tf)?\s*\n?", "", text)
+    # Remove trailing ```
+    text = re.sub(r"\n?```\s*$", "", text)
+    return text.strip() + "\n"
+
+
 async def fix_main_tf(error_text: str, yield_event=None) -> bool:
-    await _log(yield_event, "\n  [ANALYSE] Inspecting Terraform error for known fix patterns...")
+    """
+    Use Gemini AI to dynamically analyse and repair broken Terraform code.
 
+    1. Reads the current main.tf content
+    2. Sends it + the error logs to Gemini 3.7 Flash
+    3. Writes the AI-patched HCL back to disk
+    4. Emits diff events to the Web UI
+
+    Returns True if the AI successfully produced a fix, False otherwise.
+    """
+    await _log(yield_event, "\n  [ANALYSE] Invoking Gemini AI to diagnose and repair Terraform error...")
+
+    # Read current (broken) content
     with open(MAIN_TF_PATH, "r", encoding="utf-8") as fh:
-        content = fh.read()
+        original = fh.read()
 
-    original = content
-    applied  = []
+    # Build the user prompt
+    user_prompt = (
+        f"The following Terraform code failed during `terraform apply`.\n\n"
+        f"## Terraform Error Output\n```\n{error_text}\n```\n\n"
+        f"## Current main.tf\n```hcl\n{original}\n```\n\n"
+        f"Fix the code so it provisions successfully against AWS (LocalStack). "
+        f"Return ONLY the corrected HCL — nothing else."
+    )
 
-    if (
-        "InvalidBucketName" in error_text
-        or "bucket is not valid" in error_text
-        or BROKEN_BUCKET in content
-    ):
-        content = content.replace(BROKEN_BUCKET, FIXED_BUCKET)
-        applied.append(f'InvalidBucketName  =>  "{BROKEN_BUCKET}"  ->  "{FIXED_BUCKET}"')
+    try:
+        # Initialize the Gemini client
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key or api_key == "your_gemini_api_key_here":
+            await _log(yield_event, "  [WARN]    GEMINI_API_KEY not configured. Cannot invoke AI repair.", "warn")
+            return False
 
-    if "MalformedPolicy" in error_text or "INVALID_ACCT" in content:
-        content = re.sub(r'AWS\s*=\s*"arn:aws:iam::INVALID_ACCT:[^"]*"', 'AWS = "*"', content)
-        applied.append("MalformedPrincipal  =>  replaced INVALID_ACCT ARN with wildcard '*'")
+        client = genai.Client(api_key=api_key)
 
-    if content != original:
+        await _log(yield_event, f"  [AI]      Model: {GEMINI_MODEL}")
+        await _log(yield_event, f"  [AI]      Sending {len(original)} bytes of HCL + error context...")
+
+        # Call the Gemini API (synchronous SDK call wrapped for async context)
+        response = await asyncio.to_thread(
+            client.models.generate_content,
+            model=GEMINI_MODEL,
+            contents=user_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_INSTRUCTION,
+                temperature=0.1,  # Low temperature for deterministic code output
+            ),
+        )
+
+        if not response or not response.text:
+            await _log(yield_event, "  [WARN]    Gemini returned an empty response. Cannot auto-repair.", "warn")
+            return False
+
+        # Sanitize the response (strip markdown fences)
+        patched = _sanitize_hcl(response.text)
+
+        await _log(yield_event, f"  [AI]      Received {len(patched)} bytes of patched HCL.")
+
+        # Verify the AI actually changed something
+        if patched.strip() == original.strip():
+            await _log(yield_event, "  [WARN]    AI returned identical code. No fix applied.", "warn")
+            return False
+
+        # Write the patched code to disk
         with open(MAIN_TF_PATH, "w", encoding="utf-8") as fh:
-            fh.write(content)
-        for msg in applied:
-            await _log(yield_event, f"  [FIX]     {msg}", "success")
+            fh.write(patched)
+
+        await _log(yield_event, "  [FIX]     Gemini AI patch applied successfully.", "success")
         await _log(yield_event, "  [SAVED]   main.tf written to disk.\n")
-        
+
         # Emit diff event to Web UI
         await _emit(yield_event, {
             "type": "diff",
-            "message": " | ".join(applied),
+            "message": f"Gemini AI ({GEMINI_MODEL}) autonomous repair",
             "original": original,
-            "patched": content
+            "patched": patched,
         })
         return True
 
-    await _log(yield_event, "  [WARN]    No known fix pattern matched. Cannot auto-repair.\n", "warn")
-    return False
+    except Exception as e:
+        await _log(yield_event, f"  [ERROR]   Gemini API call failed: {e}", "error")
+        await _log(yield_event, "  [WARN]    Falling back — cannot auto-repair.\n", "warn")
+        return False
+
 
 # ---------------------------------------------------------------------------
 # Main autonomous loop
