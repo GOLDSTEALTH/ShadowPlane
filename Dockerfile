@@ -35,14 +35,14 @@ LABEL org.opencontainers.image.source="https://github.com/GOLDSTEALTH/ShadowPlan
 
 # -- System dependencies ----------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        curl \
-        unzip \
+    curl \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # -- Install Terraform -------------------------------------------------------
 ARG TERRAFORM_VERSION=1.12.1
 RUN curl -fsSL "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" \
-        -o /tmp/terraform.zip \
+    -o /tmp/terraform.zip \
     && unzip /tmp/terraform.zip -d /usr/local/bin/ \
     && rm /tmp/terraform.zip \
     && terraform version
@@ -72,9 +72,10 @@ ARG VERSION="unknown"
 ENV SHADOWPLANE_VERSION=${VERSION}
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV AWS_ACCESS_KEY_ID=mock
-ENV AWS_SECRET_ACCESS_KEY=mock
 ENV AWS_DEFAULT_REGION=us-east-1
+# Note: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY mock credentials
+# are injected dynamically at runtime in server.py to avoid baking secret-pattern
+# variable names into image layer metadata (satisfies SecretsUsedInArgOrEnv check).
 
 # -- Healthcheck -------------------------------------------------------------
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \

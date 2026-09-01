@@ -13,8 +13,7 @@ help:
 
 build:
 	@echo "Building $(IMAGE_NAME):$(VERSION)..."
-	docker build --build-arg VERSION=$(VERSION) -t $(IMAGE_NAME):$(VERSION) -t $(IMAGE_NAME):latest .
-
+	docker build $(ARGS) --build-arg VERSION=$(VERSION) -t $(IMAGE_NAME):$(VERSION) -t $(IMAGE_NAME):latest .
 run:
 	@echo "Running $(IMAGE_NAME):$(VERSION) locally..."
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock $(IMAGE_NAME):$(VERSION) --target-dir ./demo-infra

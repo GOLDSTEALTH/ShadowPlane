@@ -203,16 +203,32 @@ async def fix_main_tf(error_text: str, yield_event=None) -> bool:
         await _log(yield_event, f"  [AI]      Model: {GEMINI_MODEL}")
         await _log(yield_event, f"  [AI]      Sending {len(original)} bytes of HCL + error context...")
 
-        # Call the Gemini API (synchronous SDK call wrapped for async context)
-        response = await asyncio.to_thread(
-            client.models.generate_content,
-            model=GEMINI_MODEL,
-            contents=user_prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_INSTRUCTION,
-                temperature=0.1,  # Low temperature for deterministic code output
-            ),
-        )
+        # Call Gemini with exponential backoff to handle 503 UNAVAILABLE spikes
+        MAX_API_RETRIES = 3
+        BASE_DELAY = 2  # seconds
+        response = None
+
+        for attempt in range(1, MAX_API_RETRIES + 1):
+            try:
+                response = await asyncio.to_thread(
+                    client.models.generate_content,
+                    model=GEMINI_MODEL,
+                    contents=user_prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction=SYSTEM_INSTRUCTION,
+                        temperature=0.1,
+                    ),
+                )
+                break  # Success — exit retry loop
+            except Exception as api_err:
+                err_str = str(api_err)
+                is_retryable = any(code in err_str for code in ("503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "overloaded"))
+                if is_retryable and attempt < MAX_API_RETRIES:
+                    delay = BASE_DELAY ** attempt  # 2s, 4s, 8s
+                    await _log(yield_event, f"  [RETRY]   Gemini API returned transient error (attempt {attempt}/{MAX_API_RETRIES}). Retrying in {delay}s...", "warn")
+                    await asyncio.sleep(delay)
+                else:
+                    raise  # Non-retryable or exhausted retries — propagate to outer except
 
         if not response or not response.text:
             await _log(yield_event, "  [WARN]    Gemini returned an empty response. Cannot auto-repair.", "warn")

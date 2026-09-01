@@ -1,4 +1,4 @@
-mcp[cli]
+mcp<2.0.0
 fastmcp
 docker
 fastapi
