@@ -143,6 +143,7 @@ async def reset_main_tf(yield_event=None):
 # ---------------------------------------------------------------------------
 
 GEMINI_MODEL = "gemini-3.7-flash"
+GEMINI_FALLBACK_MODEL = "gemini-3.6-flash"
 
 SYSTEM_INSTRUCTION = (
     "You are an expert AWS Terraform engineer. Fix the provided Terraform code "
@@ -200,35 +201,47 @@ async def fix_main_tf(error_text: str, yield_event=None) -> bool:
 
         client = genai.Client(api_key=api_key)
 
-        await _log(yield_event, f"  [AI]      Model: {GEMINI_MODEL}")
-        await _log(yield_event, f"  [AI]      Sending {len(original)} bytes of HCL + error context...")
 
-        # Call Gemini with exponential backoff to handle 503 UNAVAILABLE spikes
+
+        # Call Gemini with exponential backoff + model fallback
         MAX_API_RETRIES = 3
         BASE_DELAY = 2  # seconds
         response = None
+        models_to_try = [GEMINI_MODEL, GEMINI_FALLBACK_MODEL]
 
-        for attempt in range(1, MAX_API_RETRIES + 1):
-            try:
-                response = await asyncio.to_thread(
-                    client.models.generate_content,
-                    model=GEMINI_MODEL,
-                    contents=user_prompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_INSTRUCTION,
-                        temperature=0.1,
-                    ),
-                )
-                break  # Success — exit retry loop
-            except Exception as api_err:
-                err_str = str(api_err)
-                is_retryable = any(code in err_str for code in ("503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "overloaded"))
-                if is_retryable and attempt < MAX_API_RETRIES:
-                    delay = BASE_DELAY ** attempt  # 2s, 4s, 8s
-                    await _log(yield_event, f"  [RETRY]   Gemini API returned transient error (attempt {attempt}/{MAX_API_RETRIES}). Retrying in {delay}s...", "warn")
-                    await asyncio.sleep(delay)
-                else:
-                    raise  # Non-retryable or exhausted retries — propagate to outer except
+        for model_name in models_to_try:
+            await _log(yield_event, f"  [AI]      Model: {model_name}")
+            await _log(yield_event, f"  [AI]      Sending {len(original)} bytes of HCL + error context...")
+
+            model_succeeded = False
+            for attempt in range(1, MAX_API_RETRIES + 1):
+                try:
+                    response = await asyncio.to_thread(
+                        client.models.generate_content,
+                        model=model_name,
+                        contents=user_prompt,
+                        config=types.GenerateContentConfig(
+                            system_instruction=SYSTEM_INSTRUCTION,
+                            temperature=0.1,
+                        ),
+                    )
+                    model_succeeded = True
+                    break  # Success — exit retry loop
+                except Exception as api_err:
+                    err_str = str(api_err)
+                    is_retryable = any(code in err_str for code in ("503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "overloaded"))
+                    if is_retryable and attempt < MAX_API_RETRIES:
+                        delay = BASE_DELAY ** attempt  # 2s, 4s, 8s
+                        await _log(yield_event, f"  [RETRY]   {model_name} returned transient error (attempt {attempt}/{MAX_API_RETRIES}). Retrying in {delay}s...", "warn")
+                        await asyncio.sleep(delay)
+                    elif is_retryable and model_name != models_to_try[-1]:
+                        await _log(yield_event, f"  [FALLBACK] {model_name} exhausted retries. Falling back to {GEMINI_FALLBACK_MODEL}...", "warn")
+                        break  # Break inner loop, try next model
+                    else:
+                        raise  # Non-retryable or last model exhausted — propagate
+
+            if model_succeeded:
+                break
 
         if not response or not response.text:
             await _log(yield_event, "  [WARN]    Gemini returned an empty response. Cannot auto-repair.", "warn")
