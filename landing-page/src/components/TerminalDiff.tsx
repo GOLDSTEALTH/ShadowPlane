@@ -54,7 +54,7 @@ export default function TerminalDiff() {
           </span>
           <div className="flex-1" />
           <span className="text-[10px] text-cyan-500 font-mono tracking-wider">
-            GEMINI 3.6-FLASH PATCH
+            SHADOWPATCH APPLIED
           </span>
         </div>
 

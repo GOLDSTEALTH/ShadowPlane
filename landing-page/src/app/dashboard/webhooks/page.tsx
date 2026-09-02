@@ -359,7 +359,7 @@ export default function WebhooksDashboard() {
               </span>
               {diffData && (
                 <span className="text-[10px] text-cyan-500 border border-cyan-900 bg-cyan-950/30 px-2 py-0.5 rounded font-mono">
-                  GEMINI DIFF APPLIED
+                  SHADOWPATCH APPLIED
                 </span>
               )}
             </div>

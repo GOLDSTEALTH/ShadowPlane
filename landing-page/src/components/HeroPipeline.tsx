@@ -24,7 +24,7 @@ export default function HeroPipeline() {
     {
       id: "heal",
       label: "FASTMCP AUTO-HEAL",
-      sublabel: "Gemini 3.7-flash → 3.6-flash fallback · temp=0.1",
+      sublabel: "ShadowPatch primary → lite fallback · temp=0.1",
       status: "neutral" as const,
       icon: "⚙",
     },
@@ -52,7 +52,7 @@ export default function HeroPipeline() {
         <p className="mt-4 text-sm text-stone-600 max-w-2xl leading-relaxed">
           Intercept AI-generated infrastructure before it reaches production.
           ShadowPlane provisions every Terraform plan inside an isolated
-          LocalStack sandbox, self-heals failures with Gemini, and enforces
+          LocalStack sandbox, self-heals failures with the ShadowPatch engine, and enforces
           strict exit codes to gate your CI/CD pipeline.
         </p>
       </div>

@@ -47,9 +47,9 @@ resource "aws_dynamodb_table" "agent_state" {
     fastmcp_trace: {
       tool_invoked: "clone_and_deploy",
       sandbox: "localstack-shadowplane:4566",
-      ai_model_primary: "gemini-3.7-flash",
-      ai_model_fallback: "gemini-3.6-flash",
-      model_used: "gemini-3.6-flash",
+      ai_model_primary: "shadowpatch-engine-v1",
+      ai_model_fallback: "shadowpatch-engine-v1-lite",
+      model_used: "shadowpatch-engine-v1-lite",
       temperature: 0.1,
       patch_size_bytes: 665,
       result: "PATCHED",
@@ -115,7 +115,7 @@ resource "aws_dynamodb_table" "agent_state" {
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 bg-green-700 inline-block" />
               <span className="text-[10px] tracking-[0.2em] font-semibold text-green-800 uppercase">
-                main.tf — After (Gemini Patch)
+                main.tf — After (ShadowPatch Applied)
               </span>
             </div>
             <span className="text-[10px] text-green-600 tracking-wider">

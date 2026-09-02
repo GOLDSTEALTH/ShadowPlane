@@ -25,7 +25,7 @@ const nodes = [
     side: "right" as const,
     tag: "GUARDRAILS",
     title: "Shift-Left Security Guardrails",
-    body: "Pipes LLM-generated patches through Checkov/tfsec. Instantly rejects and re-prompts the AI if the proposed fix violates security compliance.",
+    body: "Pipes ShadowPatch-generated patches through Checkov/tfsec. Instantly rejects and re-prompts the AI if the proposed fix violates security compliance.",
     visual: (
       <div className="font-mono text-xs leading-6 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto">
         <div className="text-red-400 font-semibold mb-1">
@@ -36,7 +36,7 @@ const nodes = [
         </div>
         <div className="text-cyan-400 flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-          [shadowplane] Re-Routing to Gemini for compliance fix...
+          [shadowplane] Re-Routing to ShadowPatch for compliance fix...
         </div>
       </div>
     ),

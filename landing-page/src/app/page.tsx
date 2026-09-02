@@ -60,7 +60,7 @@ export default function Home() {
             for Infrastructure.
           </h1>
           <p className="mt-6 text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-            Intercept broken OpenTofu and Ansible configurations, sandbox them, and enforce Checkov security policies via autonomous AI healing.
+            Intercept broken OpenTofu and Ansible configurations, sandbox them, and enforce Checkov security policies via the autonomous ShadowPatch engine.
           </p>
 
           {/* CTAs */}
@@ -122,7 +122,7 @@ export default function Home() {
             ShadowPlane · © {new Date().getFullYear()} GOLDSTEALTH
           </span>
           <span className="text-xs text-zinc-600 font-mono">
-            Next.js · FastAPI · LocalStack · Gemini
+            Next.js · FastAPI · LocalStack · ShadowPatch
           </span>
         </div>
       </footer>

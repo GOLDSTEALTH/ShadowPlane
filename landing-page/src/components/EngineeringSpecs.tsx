@@ -15,7 +15,7 @@ export default function EngineeringSpecs() {
     {
       icon: "⚡",
       header: "Latency & Fallbacks",
-      body: "Sub-100ms cold starts via Warm Pools. Dynamic model degradation (Gemini 3.7 → 3.6) ensures pipeline resiliency during API spikes.",
+      body: "Sub-100ms cold starts via Warm Pools. Intelligent ShadowPatch fallback routing ensures pipeline resiliency during API spikes.",
       tag: "PERFORMANCE",
     },
     {
