@@ -1,9 +1,12 @@
 export default function IntegrationMatrix() {
   const integrations = [
     { name: "GitHub Actions", icon: "🐙" },
-    { name: "Jenkins", icon: "🕴️" },
     { name: "GitLab CI", icon: "🦊" },
-    { name: "Terraform Cloud", icon: "☁️" },
+    { name: "Jenkins", icon: "🕴️" },
+    { name: "OpenTofu", icon: "🧅" },
+    { name: "Ansible", icon: "🅰️" },
+    { name: "Checkov", icon: "🛡️" },
+    { name: "Slack", icon: "💬" },
   ];
 
   return (
@@ -22,7 +25,7 @@ export default function IntegrationMatrix() {
               key={integration.name}
               className="flex items-center gap-3 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-300 cursor-pointer"
             >
-              <span className="text-3xl grayscale-0">{integration.icon}</span>
+              <span className="text-3xl grayscale-0 drop-shadow-md">{integration.icon}</span>
               <span className="text-lg font-semibold text-zinc-300">
                 {integration.name}
               </span>

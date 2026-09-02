@@ -7,90 +7,91 @@ import { motion, useScroll, useTransform, useInView } from "framer-motion";
 const nodes = [
   {
     side: "left" as const,
-    tag: "SECURITY",
-    title: "Zero-Trust Isolation",
-    body: "Shared-kernel Docker MVP transitioning to Firecracker microVMs. Strict zero network egress to live AWS environments.",
+    tag: "EMULATION",
+    title: "State-Aware Emulation",
+    body: "Executes dry-runs against an anonymized, sanitized replica of your production terraform.tfstate, avoiding blank-slate false positives.",
     visual: (
-      <div className="font-mono text-xs leading-6 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto">
+      <div className="font-mono text-xs leading-6 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre">
         <span className="text-zinc-600">$</span>{" "}
-        <span className="text-cyan-400">docker network disconnect</span>{" "}
-        <span className="text-zinc-400">bridge</span>{" "}
-        <span className="text-emerald-400">shadowplane-sandbox</span>
+        <span className="text-cyan-400">terraform state pull</span>{" "}
+        <span className="text-zinc-500">|</span>{" "}
+        <span className="text-emerald-400">shadowplane sanitize</span>{" "}
+        <span className="text-zinc-500">{">"}</span>{" "}
+        <span className="text-zinc-300">mock.tfstate</span>
       </div>
     ),
   },
   {
     side: "right" as const,
-    tag: "POLICY",
-    title: "Token Guardrails",
-    body: "Agent rigidly scoped via FastMCP to parse only .tf files. Physically blocked from scanning state files or massive .terraform directories.",
+    tag: "GUARDRAILS",
+    title: "Shift-Left Security Guardrails",
+    body: "Pipes LLM-generated patches through Checkov/tfsec. Instantly rejects and re-prompts the AI if the proposed fix violates security compliance.",
     visual: (
-      <div className="font-mono text-xs leading-7 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg">
-        <div className="text-zinc-500">demo-infra/</div>
-        <div className="pl-5">
-          <span className="text-zinc-700">├─</span>{" "}
-          <span className="text-zinc-600 line-through">.terraform/</span>
-          <span className="text-red-500/70 ml-3 text-xs font-semibold">BLOCKED</span>
+      <div className="font-mono text-xs leading-6 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto">
+        <div className="text-red-400 font-semibold mb-1">
+          [checkov] FAILED: CKV_AWS_20
         </div>
-        <div className="pl-5">
-          <span className="text-zinc-700">├─</span>{" "}
-          <span className="text-zinc-600 line-through">terraform.tfstate</span>
-          <span className="text-red-500/70 ml-3 text-xs font-semibold">BLOCKED</span>
+        <div className="text-zinc-500 mb-2 ml-4 border-l-2 border-red-500/30 pl-3">
+          S3 bucket has an ACL defined which allows public access.
         </div>
-        <div className="pl-5">
-          <span className="text-zinc-700">└─</span>{" "}
-          <span className="text-white font-semibold">main.tf</span>
-          <span className="text-emerald-500 ml-3 text-xs font-semibold">ALLOWED</span>
+        <div className="text-cyan-400 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+          [shadowplane] Re-Routing to Gemini for compliance fix...
         </div>
       </div>
     ),
   },
   {
     side: "left" as const,
-    tag: "PERFORMANCE",
-    title: "Latency & Fallbacks",
-    body: "Sub-100ms cold starts via Warm Pools. Dynamic model degradation (Gemini 3.7 → 3.6) ensures pipeline resiliency during LLM API capacity spikes.",
+    tag: "AUTO-HEAL",
+    title: "Full-Stack Auto-Healing",
+    body: "Goes beyond bare metal. Dynamically generates inventory and auto-heals failed Ansible playbook tasks inside simulated compute nodes.",
     visual: (
-      <div className="flex flex-wrap items-center gap-3 mt-4">
-        <div className="font-mono text-xs bg-zinc-950 border border-zinc-800 px-4 py-2.5 rounded-lg flex items-center gap-2.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-zinc-500">Cold Start:</span>
-          <span className="text-emerald-400 font-bold text-sm">84ms</span>
-        </div>
-        <div className="font-mono text-xs bg-zinc-950 border border-zinc-800 px-4 py-2.5 rounded-lg flex items-center gap-2.5">
-          <span className="text-zinc-500">Model:</span>
-          <span className="text-cyan-400 font-semibold">3.7</span>
-          <span className="text-zinc-600">→</span>
-          <span className="text-yellow-400 font-semibold">3.6</span>
-        </div>
+      <div className="font-mono text-[11px] leading-5 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre">
+        <span className="text-zinc-600">{"{"}</span>
+        {"\n"}
+        <span className="pl-4">
+          <span className="text-zinc-500">{'"'}task{'"'}: </span>
+          <span className="text-zinc-300">{'"'}Install Nginx{'"'}</span><span className="text-zinc-600">,</span>
+        </span>
+        {"\n"}
+        <span className="pl-4">
+          <span className="text-zinc-500">{'"'}status{'"'}: </span>
+          <span className="text-red-400 font-bold">{'"'}failed{'"'}</span><span className="text-zinc-600">,</span>
+        </span>
+        {"\n"}
+        <span className="pl-4">
+          <span className="text-zinc-500">{'"'}msg{'"'}: </span>
+          <span className="text-yellow-300">{'"'}No package matching 'nginxxx' found{'"'}</span>
+        </span>
+        {"\n"}
+        <span className="text-zinc-600">{"}"}</span>
       </div>
     ),
   },
   {
     side: "right" as const,
-    tag: "SAFETY",
-    title: "The Escape Hatch",
-    body: "Mandatory human review gates for destructive operations (terraform destroy). Direct webhook bypass if the interception gateway experiences downtime.",
+    tag: "CHATOPS",
+    title: "Interactive ChatOps",
+    body: "Mandatory human-in-the-loop oversight. Pushes side-by-side diffs and compliance reports directly to Slack for 1-click approvals.",
     visual: (
-      <div className="font-mono text-xs leading-7 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre">
-        <span className="text-zinc-600">{"{"}</span>
-        {"\n"}
-        <span className="pl-5">
-          <span className="text-zinc-500">{'"'}</span>
-          <span className="text-cyan-400">require_human_approval</span>
-          <span className="text-zinc-500">{'"'}: </span>
-          <span className="text-emerald-400 font-semibold">true</span>
-          <span className="text-zinc-600">,</span>
-        </span>
-        {"\n"}
-        <span className="pl-5">
-          <span className="text-zinc-500">{'"'}</span>
-          <span className="text-cyan-400">blocked_operations</span>
-          <span className="text-zinc-500">{'"'}: </span>
-          <span className="text-yellow-300">[{'"'}destroy{'"'}, {'"'}taint{'"'}]</span>
-        </span>
-        {"\n"}
-        <span className="text-zinc-600">{"}"}</span>
+      <div className="mt-4 rounded-lg border border-zinc-800 bg-zinc-950 p-4 font-sans flex flex-col gap-3">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-4 h-4 bg-zinc-800 rounded flex items-center justify-center text-[8px]">Slack</div>
+          <span className="text-xs font-semibold text-zinc-300">ShadowPlane Bot</span>
+          <span className="text-[10px] text-zinc-600">12:34 PM</span>
+        </div>
+        <p className="text-xs text-zinc-400 border-l-2 border-emerald-500 pl-3">
+          ✅ AI Auto-Repair verified against LocalStack & Checkov.
+        </p>
+        <div className="flex gap-3 mt-1">
+          <button className="px-3 py-1.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-colors">
+            Approve & Merge
+          </button>
+          <button className="px-3 py-1.5 rounded bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-semibold hover:bg-red-500/20 transition-colors">
+            Reject
+          </button>
+        </div>
       </div>
     ),
   },
@@ -146,7 +147,7 @@ function TimelineNode({
           ${isLeft ? "md:pr-0" : "md:pl-0"}
         `}
       >
-        <div className="bg-zinc-900/50 border border-zinc-800 backdrop-blur-md p-7 md:p-8 rounded-xl hover:border-zinc-700 transition-colors">
+        <div className="bg-zinc-900/50 border border-zinc-800 backdrop-blur-md p-7 md:p-8 rounded-xl hover:border-zinc-700 transition-colors shadow-xl shadow-black/20">
           {/* Tag + index */}
           <div className="flex items-center justify-between mb-4">
             <span className="text-[11px] tracking-widest text-cyan-500 font-mono font-semibold">
@@ -190,14 +191,14 @@ export default function ScrollPipeline() {
     <div className="max-w-6xl mx-auto px-6">
       {/* Section header */}
       <div className="text-center mb-20">
-        <p className="text-sm text-cyan-500 font-medium tracking-wide mb-3">
-          Built for Production
+        <p className="text-sm text-cyan-500 font-medium tracking-wide mb-3 uppercase">
+          Enterprise Architecture
         </p>
         <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
-          Engineering Specifications
+          Intelligent Policy Engine
         </h2>
         <p className="mt-3 text-zinc-400 max-w-xl mx-auto">
-          Enterprise architecture designed for DevOps teams who deploy at scale.
+          An autonomous verification layer that sits between your pull requests and your production environments.
         </p>
       </div>
 
