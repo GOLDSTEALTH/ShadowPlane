@@ -9,25 +9,25 @@ export default function Home() {
     <main className="min-h-screen bg-zinc-950">
       {/* ── Nav ─────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 border-b border-zinc-800/60 bg-zinc-950/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-xl font-bold text-zinc-100 tracking-tight">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2 overflow-x-hidden">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <span className="text-lg sm:text-xl font-bold text-zinc-100 tracking-tight">
               ShadowPlane
             </span>
-            <span className="text-[10px] text-zinc-600 border border-zinc-800 rounded-full px-2 py-0.5 font-mono">
+            <span className="text-[9px] sm:text-[10px] text-zinc-400 border border-zinc-800 rounded-full px-1.5 py-0.5 font-mono">
               v0.1.0
             </span>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 sm:gap-6 shrink-0">
             <a
               href="#demo"
-              className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
+              className="text-xs sm:text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
             >
               Demo
             </a>
             <a
               href="#specs"
-              className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
+              className="text-xs sm:text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
             >
               Architecture
             </a>
@@ -35,7 +35,7 @@ export default function Home() {
               href="https://github.com/GOLDSTEALTH/ShadowPlane"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
+              className="text-xs sm:text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
             >
               GitHub
             </a>
@@ -47,32 +47,32 @@ export default function Home() {
       <section className="relative overflow-hidden">
         {/* Subtle radial glow */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-3xl" />
+          <div className="w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] bg-cyan-500/5 rounded-full blur-3xl" />
         </div>
 
-        <div className="relative max-w-4xl mx-auto px-6 pt-24 pb-16 text-center">
-          <div className="text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-zinc-500 tracking-tighter mb-6">
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 md:pt-24 pb-12 sm:pb-16 text-center">
+          <div className="text-4xl xs:text-5xl sm:text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-zinc-500 tracking-tight sm:tracking-tighter mb-4 sm:mb-6 break-words max-w-full">
             ShadowPlane
           </div>
-          <p className="text-sm text-cyan-500 font-medium tracking-wide mb-6">
+          <p className="text-xs sm:text-sm text-cyan-500 font-medium tracking-wide mb-4 sm:mb-6 uppercase">
             Autonomous CI/CD Gatekeeper
           </p>
-          <h1 className="text-5xl md:text-7xl font-bold text-white leading-[1.1] tracking-tight">
+          <h1 className="text-2xl xs:text-3xl sm:text-5xl md:text-7xl font-bold text-white leading-[1.15] tracking-tight">
             The Flight Simulator
-            <br />
+            <br className="hidden xs:inline" />{" "}
             for Terraform.
           </h1>
-          <p className="mt-6 text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed">
             Intercept broken Terraform configurations, sandbox them in LocalStack, and auto-heal AWS API failures via the autonomous ShadowPatch engine.
           </p>
 
           {/* CTAs */}
-          <div className="mt-10 flex items-center justify-center gap-4">
+          <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full max-w-xs sm:max-w-none mx-auto">
             <a
               href="https://github.com/GOLDSTEALTH/ShadowPlane"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-white text-zinc-900 px-6 py-3 rounded-lg text-sm font-semibold hover:bg-zinc-200 transition-colors"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-zinc-900 px-6 py-3 rounded-lg text-sm font-semibold hover:bg-zinc-200 transition-colors"
             >
               <svg
                 className="w-4 h-4"
@@ -85,7 +85,7 @@ export default function Home() {
             </a>
             <a
               href="#specs"
-              className="inline-flex items-center gap-2 border border-zinc-700 text-zinc-300 px-6 py-3 rounded-lg text-sm font-semibold hover:border-zinc-500 hover:text-white transition-colors"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-zinc-700 text-zinc-300 px-6 py-3 rounded-lg text-sm font-semibold hover:border-zinc-500 hover:text-white transition-colors"
             >
               Read the Architecture
               <span className="text-zinc-500">→</span>

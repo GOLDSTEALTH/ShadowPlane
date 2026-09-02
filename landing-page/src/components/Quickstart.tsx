@@ -32,7 +32,7 @@ export default function Quickstart() {
           </div>
 
           {/* Code Body */}
-          <div className="relative p-6 font-mono text-sm leading-relaxed text-zinc-300 overflow-x-auto whitespace-pre">
+          <div className="relative p-4 sm:p-6 font-mono text-xs sm:text-sm leading-relaxed text-zinc-300 overflow-x-auto whitespace-pre-wrap sm:whitespace-pre break-all sm:break-normal">
             {/* Copy Button */}
             <button
               onClick={handleCopy}

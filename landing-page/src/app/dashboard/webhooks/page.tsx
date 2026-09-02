@@ -175,10 +175,10 @@ export default function WebhooksDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-zinc-100 p-6 md:p-10 font-sans">
-      <header className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Webhook Interception</h1>
-        <div className="flex items-center gap-3 bg-zinc-950 border border-zinc-800 px-4 py-2 rounded-lg">
+    <div className="min-h-screen bg-black text-zinc-100 p-4 sm:p-6 md:p-10 font-sans overflow-x-hidden">
+      <header className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Webhook Interception</h1>
+        <div className="flex items-center gap-2.5 bg-zinc-950 border border-zinc-800 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg shrink-0">
           <div
             className={`w-2.5 h-2.5 rounded-full ${
               wsStatus === "connected"
@@ -188,7 +188,7 @@ export default function WebhooksDashboard() {
                 : "bg-red-500"
             }`}
           />
-          <span className="text-sm text-zinc-400 capitalize font-medium">{wsStatus}</span>
+          <span className="text-xs sm:text-sm text-zinc-400 capitalize font-medium">{wsStatus}</span>
         </div>
       </header>
 

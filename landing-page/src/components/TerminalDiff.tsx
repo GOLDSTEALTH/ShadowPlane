@@ -42,18 +42,18 @@ export default function TerminalDiff() {
       {/* Window Chrome */}
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 shadow-2xl shadow-black/50 backdrop-blur-sm overflow-hidden">
         {/* Title Bar */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800 bg-zinc-900">
+        <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-zinc-800 bg-zinc-900 overflow-x-hidden">
           {/* Traffic lights */}
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-red-500/80" />
-            <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
-            <span className="w-3 h-3 rounded-full bg-green-500/80" />
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500/80" />
+            <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-yellow-500/80" />
+            <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-green-500/80" />
           </div>
-          <span className="text-xs text-zinc-500 font-mono ml-2">
+          <span className="text-[11px] sm:text-xs text-zinc-500 font-mono ml-1 sm:ml-2 truncate">
             shadowplane — main.tf diff
           </span>
           <div className="flex-1" />
-          <span className="text-[10px] text-cyan-500 font-mono tracking-wider">
+          <span className="text-[9px] sm:text-[10px] text-cyan-500 font-mono tracking-wider shrink-0 hidden xs:inline-block">
             SHADOWPATCH APPLIED
           </span>
         </div>
