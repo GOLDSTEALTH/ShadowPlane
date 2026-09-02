@@ -11,7 +11,7 @@ export default function Home() {
       <nav className="sticky top-0 z-50 border-b border-zinc-800/60 bg-zinc-950/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-base font-semibold text-zinc-100 tracking-tight">
+            <span className="text-xl font-bold text-zinc-100 tracking-tight">
               ShadowPlane
             </span>
             <span className="text-[10px] text-zinc-600 border border-zinc-800 rounded-full px-2 py-0.5 font-mono">
