@@ -60,10 +60,10 @@ export default function Home() {
           <h1 className="text-5xl md:text-7xl font-bold text-white leading-[1.1] tracking-tight">
             The Flight Simulator
             <br />
-            for Infrastructure.
+            for Terraform.
           </h1>
           <p className="mt-6 text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-            Intercept broken OpenTofu and Ansible configurations, sandbox them, and enforce Checkov security policies via the autonomous ShadowPatch engine.
+            Intercept broken Terraform configurations, sandbox them in LocalStack, and auto-heal AWS API failures via the autonomous ShadowPatch engine.
           </p>
 
           {/* CTAs */}

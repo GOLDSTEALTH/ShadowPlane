@@ -7,10 +7,7 @@ export default function IntegrationMatrix() {
     { name: "GitLab CI", icon: "🦊", image: "/GitLab.png", glow: "shadow-[0_0_30px_rgba(249,115,22,0.15)]" },
     { name: "Jenkins", icon: "🕴️", image: "/Jenkins.png", glow: "shadow-[0_0_30px_rgba(239,68,68,0.15)]" },
     { name: "Terraform", icon: "🏗️", image: "/HashiCorp Terraform.png", glow: "shadow-[0_0_30px_rgba(168,85,247,0.15)]" },
-    { name: "OpenTofu", icon: "🧅", glow: "shadow-[0_0_30px_rgba(234,179,8,0.15)]" },
-    { name: "Ansible", icon: "🅰️", image: "/Ansible.png", glow: "shadow-[0_0_30px_rgba(220,38,38,0.15)]" },
-    { name: "Checkov", icon: "🛡️", glow: "shadow-[0_0_30px_rgba(99,102,241,0.15)]" },
-    { name: "Slack", icon: "💬", image: "/Slack.png", glow: "shadow-[0_0_30px_rgba(20,184,166,0.15)]" },
+    { name: "LocalStack", icon: "💻", glow: "shadow-[0_0_30px_rgba(16,185,129,0.15)]" },
   ];
 
   return (

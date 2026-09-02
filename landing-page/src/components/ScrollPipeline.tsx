@@ -7,91 +7,66 @@ import { motion, useScroll, useTransform, useInView } from "framer-motion";
 const nodes = [
   {
     side: "left" as const,
-    tag: "EMULATION",
-    title: "State-Aware Emulation",
-    body: "Executes dry-runs against an anonymized, sanitized replica of your production terraform.tfstate, avoiding blank-slate false positives.",
+    tag: "ISOLATION",
+    title: "LocalStack Isolation",
+    body: "Intercepts Terraform plans and physically isolates execution within a LocalStack sandbox to prevent live AWS mutation.",
     visual: (
       <div className="font-mono text-xs leading-6 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre">
         <span className="text-zinc-600">$</span>{" "}
-        <span className="text-cyan-400">terraform state pull</span>{" "}
-        <span className="text-zinc-500">|</span>{" "}
-        <span className="text-emerald-400">shadowplane sanitize</span>{" "}
-        <span className="text-zinc-500">{">"}</span>{" "}
-        <span className="text-zinc-300">mock.tfstate</span>
+        <span className="text-cyan-400">terraform apply</span>{" "}
+        <span className="text-zinc-500">-var="</span><span className="text-emerald-400">env=sandbox</span><span className="text-zinc-500">"</span>
       </div>
     ),
   },
   {
     side: "right" as const,
     tag: "GUARDRAILS",
-    title: "Shift-Left Security Guardrails",
-    body: "Pipes ShadowPatch-generated patches through Checkov/tfsec. Instantly rejects and re-prompts the AI if the proposed fix violates security compliance.",
+    title: "Token Guardrails",
+    body: "Agent rigidly scoped via FastMCP to parse only .tf files. Physically blocked from scanning massive .terraform directories.",
     visual: (
       <div className="font-mono text-xs leading-6 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto">
-        <div className="text-red-400 font-semibold mb-1">
-          [checkov] FAILED: CKV_AWS_20
+        <div className="text-zinc-600">├── <span className="opacity-50">.terraform/</span></div>
+        <div className="text-zinc-600">├── <span className="opacity-50">.terraform.lock.hcl</span></div>
+        <div className="text-zinc-200 font-semibold flex items-center gap-2">
+          <span>├── main.tf</span>
+          <span className="text-[10px] text-cyan-500 border border-cyan-900 bg-cyan-950/30 px-1.5 py-0 rounded">ALLOWED</span>
         </div>
-        <div className="text-zinc-500 mb-2 ml-4 border-l-2 border-red-500/30 pl-3">
-          S3 bucket has an ACL defined which allows public access.
-        </div>
-        <div className="text-cyan-400 flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-          [shadowplane] Re-Routing to ShadowPatch for compliance fix...
-        </div>
+        <div className="text-zinc-600">└── <span className="opacity-50">terraform.tfstate</span></div>
       </div>
     ),
   },
   {
     side: "left" as const,
     tag: "AUTO-HEAL",
-    title: "Full-Stack Auto-Healing",
-    body: "Goes beyond bare metal. Dynamically generates inventory and auto-heals failed Ansible playbook tasks inside simulated compute nodes.",
+    title: "Autonomous HCL Healing",
+    body: "Parses LocalStack API validation exceptions and routes the broken syntax to the ShadowPatch engine for deterministic repair.",
     visual: (
       <div className="font-mono text-[11px] leading-5 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre">
-        <span className="text-zinc-600">{"{"}</span>
-        {"\n"}
-        <span className="pl-4">
-          <span className="text-zinc-500">{'"'}task{'"'}: </span>
-          <span className="text-zinc-300">{'"'}Install Nginx{'"'}</span><span className="text-zinc-600">,</span>
-        </span>
-        {"\n"}
-        <span className="pl-4">
-          <span className="text-zinc-500">{'"'}status{'"'}: </span>
-          <span className="text-red-400 font-bold">{'"'}failed{'"'}</span><span className="text-zinc-600">,</span>
-        </span>
-        {"\n"}
-        <span className="pl-4">
-          <span className="text-zinc-500">{'"'}msg{'"'}: </span>
-          <span className="text-yellow-300">{'"'}No package matching 'nginxxx' found{'"'}</span>
-        </span>
-        {"\n"}
-        <span className="text-zinc-600">{"}"}</span>
+        <div className="text-red-400 font-semibold mb-1">
+          AWS API Exception: InvalidBucketName
+        </div>
+        <div className="text-zinc-500 mb-2 border-l-2 border-red-500/30 pl-3">
+          The specified bucket is not valid.
+        </div>
+        <div className="text-cyan-400 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+          [shadowplane] ShadowPatch Applied
+        </div>
       </div>
     ),
   },
   {
     side: "right" as const,
-    tag: "CHATOPS",
-    title: "Interactive ChatOps",
-    body: "Mandatory human-in-the-loop oversight. Pushes side-by-side diffs and compliance reports directly to Slack for 1-click approvals.",
+    tag: "ESCAPE HATCH",
+    title: "The Escape Hatch",
+    body: "Mandatory human review gates for destructive operations (terraform destroy). Direct webhook bypass if the interception gateway experiences downtime.",
     visual: (
-      <div className="mt-4 rounded-lg border border-zinc-800 bg-zinc-950 p-4 font-sans flex flex-col gap-3">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-4 h-4 bg-zinc-800 rounded flex items-center justify-center text-[8px]">Slack</div>
-          <span className="text-xs font-semibold text-zinc-300">ShadowPlane Bot</span>
-          <span className="text-[10px] text-zinc-600">12:34 PM</span>
-        </div>
-        <p className="text-xs text-zinc-400 border-l-2 border-emerald-500 pl-3">
-          ✅ AI Auto-Repair verified against LocalStack & Checkov.
-        </p>
-        <div className="flex gap-3 mt-1">
-          <button className="px-3 py-1.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-colors">
-            Approve & Merge
-          </button>
-          <button className="px-3 py-1.5 rounded bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-semibold hover:bg-red-500/20 transition-colors">
-            Reject
-          </button>
-        </div>
+      <div className="font-mono text-xs leading-6 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre text-zinc-300">
+        {"{"}
+        {"\n  "}<span className="text-zinc-500">"gatekeeper_mode"</span>: <span className="text-emerald-400">"active"</span>,
+        {"\n  "}<span className="text-zinc-500">"require_human_approval"</span>: <span className="text-cyan-400">true</span>,
+        {"\n  "}<span className="text-zinc-500">"fail_open"</span>: <span className="text-cyan-400">true</span>
+        {"\n"}{"}"}
       </div>
     ),
   },

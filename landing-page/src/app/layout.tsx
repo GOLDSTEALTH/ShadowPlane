@@ -14,27 +14,24 @@ const jetbrains = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://shadowplane.vercel.app"),
-  title: "ShadowPlane | The Flight Simulator for Infrastructure",
+  title: "ShadowPlane | The Flight Simulator for Terraform",
   description:
-    "Intercept broken OpenTofu and Ansible configurations, sandbox them in LocalStack, and enforce Checkov security policies via autonomous AI healing.",
+    "Intercept broken Terraform configurations, sandbox them in LocalStack, and auto-heal AWS API failures via the autonomous ShadowPatch engine.",
   keywords: [
     "DevOps",
     "CI/CD",
     "Infrastructure as Code",
-    "OpenTofu",
     "Terraform",
-    "Ansible",
     "AI Auto-Healing",
-    "Checkov",
     "LocalStack",
     "Platform Engineering"
   ],
   openGraph: {
     type: "website",
     url: "https://shadowplane.vercel.app",
-    title: "ShadowPlane | The Flight Simulator for Infrastructure",
+    title: "ShadowPlane | The Flight Simulator for Terraform",
     description:
-      "Intercept broken OpenTofu and Ansible configurations, sandbox them in LocalStack, and enforce Checkov security policies via autonomous AI healing.",
+      "Intercept broken Terraform configurations, sandbox them in LocalStack, and auto-heal AWS API failures via the autonomous ShadowPatch engine.",
     images: [
       {
         url: "/og-image.png",
@@ -46,9 +43,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "ShadowPlane | The Flight Simulator for Infrastructure",
+    title: "ShadowPlane | The Flight Simulator for Terraform",
     description:
-      "Intercept broken OpenTofu and Ansible configurations, sandbox them in LocalStack, and enforce Checkov security policies via autonomous AI healing.",
+      "Intercept broken Terraform configurations, sandbox them in LocalStack, and auto-heal AWS API failures via the autonomous ShadowPatch engine.",
     images: ["/og-image.png"],
   },
 };
@@ -65,7 +62,7 @@ export default function RootLayout({
     applicationCategory: "DeveloperApplication",
     operatingSystem: "Web, Docker, Linux",
     description:
-      "The Flight Simulator for Infrastructure. An enterprise-grade CI/CD policy engine that intercepts broken OpenTofu and Ansible configurations, sandboxes them in LocalStack, and enforces Checkov security policies via autonomous AI healing.",
+      "The Flight Simulator for Terraform. An enterprise-grade CI/CD policy engine that intercepts broken Terraform configurations, sandboxes them in LocalStack, and auto-heals AWS API failures via the autonomous ShadowPatch engine.",
   };
 
   return (
