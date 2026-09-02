@@ -1,5 +1,5 @@
 import TerminalDiff from "@/components/TerminalDiff";
-import EngineeringSpecs from "@/components/EngineeringSpecs";
+import ScrollPipeline from "@/components/ScrollPipeline";
 
 export default function Home() {
   return (
@@ -101,7 +101,7 @@ export default function Home() {
 
       {/* ── Engineering Specs ────────────────────────────────────────── */}
       <section id="specs" className="py-24">
-        <EngineeringSpecs />
+        <ScrollPipeline />
       </section>
 
       {/* ── Footer ──────────────────────────────────────────────────── */}
