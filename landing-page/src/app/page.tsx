@@ -51,6 +51,9 @@ export default function Home() {
         </div>
 
         <div className="relative max-w-4xl mx-auto px-6 pt-24 pb-16 text-center">
+          <div className="text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-zinc-500 tracking-tighter mb-6">
+            ShadowPlane
+          </div>
           <p className="text-sm text-cyan-500 font-medium tracking-wide mb-6">
             Autonomous CI/CD Gatekeeper
           </p>
