@@ -1,3 +1,4 @@
+import Navbar from "@/components/Navbar";
 import TerminalDiff from "@/components/TerminalDiff";
 import ScrollPipeline from "@/components/ScrollPipeline";
 import IntegrationMatrix from "@/components/IntegrationMatrix";
@@ -8,40 +9,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-zinc-950">
       {/* ── Nav ─────────────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-50 border-b border-zinc-800/60 bg-zinc-950/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2 overflow-x-hidden">
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <span className="text-lg sm:text-xl font-bold text-zinc-100 tracking-tight">
-              ShadowPlane
-            </span>
-            <span className="text-[9px] sm:text-[10px] text-zinc-400 border border-zinc-800 rounded-full px-1.5 py-0.5 font-mono">
-              v0.1.0
-            </span>
-          </div>
-          <div className="flex items-center gap-3 sm:gap-6 shrink-0">
-            <a
-              href="#demo"
-              className="text-xs sm:text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
-            >
-              Demo
-            </a>
-            <a
-              href="#specs"
-              className="text-xs sm:text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
-            >
-              Architecture
-            </a>
-            <a
-              href="https://github.com/GOLDSTEALTH/ShadowPlane"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs sm:text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
-            >
-              GitHub
-            </a>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* ── Hero ────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
