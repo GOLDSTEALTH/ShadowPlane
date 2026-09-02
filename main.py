@@ -7,6 +7,7 @@ from engine.runner import IaCRunner, LocalStackConnector
 from engine.security import CheckovValidator
 from engine.state_manager import StateSanitizer
 from engine.notifications import SlackNotifier
+from engine.logger import get_logger
 
 load_dotenv()
 
@@ -14,6 +15,7 @@ class ShadowPlaneEngine:
     def __init__(self, target_dir: str, pr_number: str):
         self.target_dir = target_dir
         self.pr_number = pr_number
+        self.log = get_logger("ShadowPlaneEngine")
         
         self.runner = IaCRunner(binary="tofu", connector=LocalStackConnector())
         self.security = CheckovValidator()
@@ -36,27 +38,27 @@ class ShadowPlaneEngine:
         return text
 
     def run_pipeline(self) -> bool:
-        print(f"========== SHADOWPLANE ENTERPRISE ENGINE ==========")
-        print(f"[1/8] PR Webhook Received: PR #{self.pr_number}")
+        self.log.info(f"========== SHADOWPLANE ENTERPRISE ENGINE ==========")
+        self.log.info(f"[1/8] PR Webhook Received: PR #{self.pr_number}")
         
         # 1. Fetch Sanitized State
-        print("[2/8] Fetching and Sanitizing State...")
+        self.log.info("[2/8] Fetching and Sanitizing State...")
         has_state = self.state_manager.ingest_and_sanitize()
         if has_state:
-            print("  -> Sanitized tfstate loaded into LocalStack Sandbox.")
+            self.log.info("  -> Sanitized tfstate loaded into LocalStack Sandbox.")
         else:
-            print("  -> No existing state found. Proceeding with clean sandbox.")
+            self.log.info("  -> No existing state found. Proceeding with clean sandbox.")
 
         try:
             # 2. Tofu Init
-            print("[3/8] Initializing OpenTofu...")
+            self.log.info("[3/8] Initializing OpenTofu...")
             init_res = self.runner.init(self.target_dir)
             if not init_res["success"]:
-                print(f"Init Failed:\n{init_res['stderr']}")
+                self.log.info(f"Init Failed:\n{init_res['stderr']}")
                 return False
 
             # 3. Tofu Apply (Catch AWS API Error)
-            print("[4/8] Running Tofu Apply (Dry-Run / First Attempt)...")
+            self.log.info("[4/8] Running Tofu Apply (Dry-Run / First Attempt)...")
             apply_res = self.runner.apply(self.target_dir)
             
             original_hcl = ""
@@ -68,13 +70,13 @@ class ShadowPlaneEngine:
                     original_hcl = f.read()
             
             if apply_res["success"]:
-                print("  -> Apply successful on first try. No AI repair needed.")
+                self.log.info("  -> Apply successful on first try. No AI repair needed.")
                 patched_hcl = original_hcl
             else:
-                print(f"  -> Caught AWS API / Provisioning Error (Code {apply_res['exit_code']}).")
+                self.log.info(f"  -> Caught AWS API / Provisioning Error (Code {apply_res['exit_code']}).")
                 
-                # 4. Gemini LLM Patch (with Checkov retry loop)
-                print("[5/8] Engaging Gemini LLM & Security Guardrails...")
+                # 4. ShadowPatch Patch (with Checkov retry loop)
+                self.log.info("[5/8] Engaging ShadowPatch AI & Security Guardrails...")
                 
                 max_ai_retries = 3
                 current_hcl = original_hcl
@@ -82,7 +84,7 @@ class ShadowPlaneEngine:
                 error_context = apply_res['stderr']
                 
                 for attempt in range(1, max_ai_retries + 1):
-                    print(f"  -> [AI Attempt {attempt}] Prompting Gemini {self.model}...")
+                    self.log.info(f"  -> [AI Attempt {attempt}] Prompting ShadowPatch Engine...")
                     
                     prompt = f"""
 You are an expert AWS OpenTofu/Terraform engineer.
@@ -106,39 +108,39 @@ Return ONLY the raw, valid HCL code. No markdown or explanations.
                             f.write(patched_hcl)
                             
                         # 5. Checkov Security Scan
-                        print("  -> Running Checkov Security Scan on LLM Patch...")
+                        self.log.info("  -> Running Checkov Security Scan on ShadowPatch Output...")
                         sec_result = self.security.scan(self.target_dir)
                         
                         if sec_result["passed"]:
-                            print("  -> Checkov Validation PASSED. Shift-Left Security enforced.")
+                            self.log.info("  -> Checkov Validation PASSED. Shift-Left Security enforced.")
                             patched = True
                             break
                         else:
-                            print(f"  -> Checkov Validation FAILED. Issues found: {len(sec_result.get('failed_checks', []))}")
+                            self.log.info(f"  -> Checkov Validation FAILED. Issues found: {len(sec_result.get('failed_checks', []))}")
                             error_context = "The previous patch failed Checkov security validation:\n" + str(sec_result["failed_checks"]) + "\nFix the code to be compliant."
                             current_hcl = patched_hcl
                             
                     except Exception as e:
-                        print(f"  -> Gemini API Error: {e}")
+                        self.log.info(f"  -> ShadowPatch Core Error: {e}")
                         break
 
                 if not patched:
-                    print("  -> Failed to generate a secure and valid patch.")
+                    self.log.info("  -> Failed to generate a secure and valid patch.")
                     return False
                     
                 # 6. Tofu Apply in LocalStack (Verification)
-                print("[6/8] Verifying AI Patch with LocalStack OpenTofu Apply...")
+                self.log.info("[6/8] Verifying AI Patch with LocalStack OpenTofu Apply...")
                 verify_res = self.runner.apply(self.target_dir)
                 if not verify_res["success"]:
-                    print(f"  -> Verification Failed!\n{verify_res['stderr']}")
+                    self.log.info(f"  -> Verification Failed!\n{verify_res['stderr']}")
                     return False
-                print("  -> Verification PASSED. Blast Radius Contained.")
+                self.log.info("  -> Verification PASSED. Blast Radius Contained.")
 
             # 7. Slack ChatOps Notification
-            print("[7/8] Dispatching Slack ChatOps Notification...")
+            self.log.info("[7/8] Dispatching Slack ChatOps Notification...")
             self.notifier.send_verification_success(self.pr_number, original_hcl, patched_hcl)
             
-            print("[8/8] Pipeline Complete. Success.")
+            self.log.info("[8/8] Pipeline Complete. Success.")
             return True
             
         finally:
