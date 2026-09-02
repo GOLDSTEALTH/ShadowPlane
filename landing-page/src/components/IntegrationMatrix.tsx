@@ -7,7 +7,7 @@ export default function IntegrationMatrix() {
     { name: "GitLab CI", icon: "🦊", image: "/GitLab.png", glow: "shadow-[0_0_30px_rgba(249,115,22,0.15)]" },
     { name: "Jenkins", icon: "🕴️", image: "/Jenkins.png", glow: "shadow-[0_0_30px_rgba(239,68,68,0.15)]" },
     { name: "Terraform", icon: "🏗️", image: "/HashiCorp Terraform.png", glow: "shadow-[0_0_30px_rgba(168,85,247,0.15)]" },
-    { name: "LocalStack", icon: "💻", glow: "shadow-[0_0_30px_rgba(16,185,129,0.15)]" },
+    { name: "LocalStack", icon: "💻", image: "/LocalStack.jpeg", glow: "shadow-[0_0_30px_rgba(16,185,129,0.15)]" },
   ];
 
   return (
