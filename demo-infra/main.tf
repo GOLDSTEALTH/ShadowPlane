@@ -1,8 +1,5 @@
-# ShadowPlane Demo Infrastructure
-# Provisions an S3 bucket and an IAM bucket policy.
-
 resource "aws_s3_bucket" "shadowplane_bucket" {
-  bucket = "shadowplane-demo-862e61"
+  bucket = "shadowplane-demo-c10880"
 }
 
 resource "aws_s3_bucket_policy" "shadowplane_policy" {

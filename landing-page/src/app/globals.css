@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-stone-100 text-stone-900 antialiased;
+  }
+
+  /* Scrollbar styling for the industrial look */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-stone-200;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-stone-400;
+  }
+
+  /* Selection color */
+  ::selection {
+    @apply bg-orange-600/20 text-orange-900;
+  }
+}
