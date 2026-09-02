@@ -181,10 +181,10 @@ export default function ScrollPipeline() {
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start 80%", "end 20%"],
+    offset: ["start 90%", "end 50%"],
   });
 
-  const scaleY = useTransform(scrollYProgress, [0, 1], [0, 1]);
+  const height = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
 
   return (
     <div className="max-w-6xl mx-auto px-6">
@@ -215,11 +215,11 @@ export default function ScrollPipeline() {
         />
         {/* Glowing progress fill */}
         <motion.div
-          style={{ scaleY, transformOrigin: "top" }}
+          style={{ height }}
           className="
             absolute
             left-[14px] md:left-1/2 md:-translate-x-px
-            top-0 bottom-0 w-[2px]
+            top-0 w-[2px]
             bg-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.5)]
           "
         />
