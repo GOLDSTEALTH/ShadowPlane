@@ -1,5 +1,8 @@
 import TerminalDiff from "@/components/TerminalDiff";
 import ScrollPipeline from "@/components/ScrollPipeline";
+import IntegrationMatrix from "@/components/IntegrationMatrix";
+import BusinessROI from "@/components/BusinessROI";
+import Quickstart from "@/components/Quickstart";
 
 export default function Home() {
   return (
@@ -100,9 +103,18 @@ export default function Home() {
       </div>
 
       {/* ── Engineering Specs ────────────────────────────────────────── */}
-      <section id="specs" className="py-24">
+      <section id="specs" className="pt-24">
         <ScrollPipeline />
       </section>
+
+      {/* ── Integration Matrix ───────────────────────────────────────── */}
+      <IntegrationMatrix />
+
+      {/* ── Business ROI ─────────────────────────────────────────────── */}
+      <BusinessROI />
+
+      {/* ── Quickstart ───────────────────────────────────────────────── */}
+      <Quickstart />
 
       {/* ── Footer ──────────────────────────────────────────────────── */}
       <footer className="border-t border-zinc-800/60 py-8">
