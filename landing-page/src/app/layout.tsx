@@ -22,8 +22,11 @@ export const metadata: Metadata = {
     "CI/CD",
     "Infrastructure as Code",
     "Terraform",
-    "AI Auto-Healing",
     "LocalStack",
+    "FastMCP",
+    "ShadowPatch",
+    "HCL",
+    "AWS Sandbox",
     "Platform Engineering"
   ],
   openGraph: {
