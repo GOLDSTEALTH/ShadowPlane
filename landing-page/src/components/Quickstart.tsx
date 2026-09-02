@@ -13,9 +13,9 @@ export default function Quickstart() {
   };
 
   return (
-    <section className="py-24 border-t border-zinc-800/60 bg-zinc-950">
-      <div className="max-w-4xl mx-auto px-6 text-center">
-        <h2 className="text-3xl md:text-4xl font-bold text-zinc-100 tracking-tight mb-8">
+    <section className="py-16 sm:py-24 border-t border-zinc-800/60 bg-zinc-950">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-zinc-100 tracking-tight mb-6 sm:mb-8">
           Deploy the interception proxy locally in 60 seconds.
         </h2>
 

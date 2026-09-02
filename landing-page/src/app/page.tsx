@@ -87,14 +87,23 @@ export default function Home() {
       <Quickstart />
 
       {/* ── Footer ──────────────────────────────────────────────────── */}
-      <footer className="border-t border-zinc-800/60 py-8">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-sm text-zinc-500">
-            ShadowPlane · © {new Date().getFullYear()} GOLDSTEALTH
-          </span>
-          <span className="text-xs text-zinc-600 font-mono">
-            Next.js · FastAPI · LocalStack · ShadowPatch
-          </span>
+      <footer className="border-t border-zinc-800/60 py-8 bg-zinc-950">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+          <div className="text-xs sm:text-sm text-zinc-500 text-center sm:text-left w-full sm:w-auto">
+            <span>ShadowPlane</span>{" "}
+            <span className="text-zinc-700">·</span>{" "}
+            <span>© {new Date().getFullYear()} GOLDSTEALTH</span>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-2.5 gap-y-1.5 text-xs text-zinc-500 font-mono text-center w-full sm:w-auto">
+            <span>Next.js</span>
+            <span className="text-zinc-700 select-none">·</span>
+            <span>FastAPI</span>
+            <span className="text-zinc-700 select-none">·</span>
+            <span>LocalStack</span>
+            <span className="text-zinc-700 select-none">·</span>
+            <span>ShadowPatch</span>
+          </div>
         </div>
       </footer>
     </main>
