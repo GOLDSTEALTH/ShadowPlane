@@ -1,91 +1,71 @@
 export default function EngineeringSpecs() {
   const specs = [
     {
-      id: "isolation",
+      icon: "🛡",
       header: "Zero-Trust Isolation",
-      code: "NETWORK_EGRESS=DENY_ALL",
       body: "Shared-kernel Docker MVP transitioning to Firecracker microVMs. Strict zero network egress to live AWS environments.",
       tag: "SECURITY",
     },
     {
-      id: "guardrails",
+      icon: "🔒",
       header: "Token Guardrails",
-      code: "MCP_SCOPE=*.tf ONLY",
       body: "Agent rigidly scoped via MCP to parse only .tf files. Physically blocked from scanning state files or large .terraform directories.",
       tag: "POLICY",
     },
     {
-      id: "latency",
+      icon: "⚡",
       header: "Latency & Fallbacks",
-      code: "COLD_START<100ms",
-      body: "Sub-100ms cold starts via Warm Pools. Dynamic model degradation (Gemini 3.7 to 3.6) ensures pipeline resiliency during API spikes.",
-      tag: "PERF",
+      body: "Sub-100ms cold starts via Warm Pools. Dynamic model degradation (Gemini 3.7 → 3.6) ensures pipeline resiliency during API spikes.",
+      tag: "PERFORMANCE",
     },
     {
-      id: "escape",
+      icon: "🚨",
       header: "The Escape Hatch",
-      code: "HUMAN_GATE=REQUIRED",
-      body: 'Mandatory human review gates for destructive operations (terraform destroy). Direct webhook bypass if the interception gateway goes down.',
+      body: "Mandatory human review gates for destructive operations (terraform destroy). Direct webhook bypass if the interception gateway goes down.",
       tag: "SAFETY",
     },
   ];
 
   return (
-    <section className="border-b border-stone-300">
-      {/* Section Header */}
-      <div className="border-b border-stone-300 px-6 py-6 md:px-12">
-        <p className="text-[10px] tracking-[0.3em] text-stone-400 uppercase mb-2">
-          Component C
+    <div className="max-w-6xl mx-auto px-6">
+      <div className="text-center mb-16">
+        <p className="text-sm text-cyan-500 font-medium tracking-wide mb-3">
+          Built for Production
         </p>
-        <h2 className="text-xl md:text-2xl font-bold text-stone-900">
+        <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
           Engineering Specifications
         </h2>
-        <p className="text-xs text-stone-500 mt-1">
-          Enterprise architecture data sheet — for DevOps veterans who read
-          RFCs, not marketing copy
+        <p className="mt-3 text-zinc-400 max-w-xl mx-auto">
+          Enterprise architecture designed for DevOps teams who deploy at scale.
         </p>
       </div>
 
-      {/* 4-Column Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-        {specs.map((spec, i) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-px bg-zinc-800 border border-zinc-800 rounded-xl overflow-hidden">
+        {specs.map((spec) => (
           <div
-            key={spec.id}
-            className={`
-              border-b sm:border-b xl:border-b-0 border-stone-300 p-5
-              ${i < specs.length - 1 ? "sm:border-r xl:border-r" : ""}
-              ${i === 0 ? "" : ""}
-            `}
+            key={spec.tag}
+            className="bg-zinc-900 p-6 flex flex-col gap-4 hover:bg-zinc-800/60 transition-colors"
           >
-            {/* Tag */}
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[9px] tracking-[0.3em] font-bold text-orange-600 uppercase border border-orange-600 px-2 py-0.5">
+            {/* Icon + Tag */}
+            <div className="flex items-center justify-between">
+              <span className="text-2xl">{spec.icon}</span>
+              <span className="text-[10px] tracking-widest text-cyan-500 font-mono font-semibold">
                 {spec.tag}
-              </span>
-              <span className="text-[9px] tracking-wider text-stone-400">
-                SPEC-{String(i + 1).padStart(2, "0")}
               </span>
             </div>
 
             {/* Header */}
-            <h3 className="text-sm font-bold text-stone-900 mb-2">
+            <h3 className="text-sm font-semibold text-zinc-100">
               {spec.header}
             </h3>
 
-            {/* Code line */}
-            <div className="border border-stone-300 bg-stone-50 px-3 py-1.5 mb-3">
-              <code className="text-[10px] text-orange-700 font-bold">
-                {spec.code}
-              </code>
-            </div>
-
             {/* Body */}
-            <p className="text-xs text-stone-600 leading-relaxed">
+            <p className="text-xs text-zinc-500 leading-relaxed flex-1">
               {spec.body}
             </p>
           </div>
         ))}
       </div>
-    </section>
+    </div>
   );
 }

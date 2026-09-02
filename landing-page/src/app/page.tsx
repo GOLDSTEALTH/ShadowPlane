@@ -1,65 +1,117 @@
-import HeroPipeline from "@/components/HeroPipeline";
-import DiffViewer from "@/components/DiffViewer";
+import TerminalDiff from "@/components/TerminalDiff";
 import EngineeringSpecs from "@/components/EngineeringSpecs";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-stone-100">
-      {/* Top Navigation Bar */}
-      <nav className="border-b border-stone-300 px-6 md:px-12 py-3 flex items-center justify-between bg-white">
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-bold text-stone-900 tracking-tight">
-            ◇ SHADOWPLANE
-          </span>
-          <span className="text-[10px] text-stone-400 tracking-wider border border-stone-300 px-2 py-0.5">
-            v0.1.0
-          </span>
-        </div>
-        <div className="flex items-center gap-6">
-          <a
-            href="https://github.com/GOLDSTEALTH/ShadowPlane"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-stone-600 hover:text-orange-600 transition-colors tracking-wider uppercase"
-          >
-            GitHub
-          </a>
-          <a
-            href="#specs"
-            className="text-xs text-stone-600 hover:text-orange-600 transition-colors tracking-wider uppercase"
-          >
-            Specs
-          </a>
-          <span className="text-[10px] font-bold text-white bg-orange-600 px-3 py-1.5 tracking-wider uppercase cursor-pointer hover:bg-orange-700 transition-colors">
-            Deploy →
-          </span>
+    <main className="min-h-screen bg-zinc-950">
+      {/* ── Nav ─────────────────────────────────────────────────────── */}
+      <nav className="sticky top-0 z-50 border-b border-zinc-800/60 bg-zinc-950/80 backdrop-blur-md">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-base font-semibold text-zinc-100 tracking-tight">
+              ShadowPlane
+            </span>
+            <span className="text-[10px] text-zinc-600 border border-zinc-800 rounded-full px-2 py-0.5 font-mono">
+              v0.1.0
+            </span>
+          </div>
+          <div className="flex items-center gap-6">
+            <a
+              href="#demo"
+              className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
+            >
+              Demo
+            </a>
+            <a
+              href="#specs"
+              className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
+            >
+              Architecture
+            </a>
+            <a
+              href="https://github.com/GOLDSTEALTH/ShadowPlane"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
+            >
+              GitHub
+            </a>
+          </div>
         </div>
       </nav>
 
-      {/* Component A: Hero Pipeline Schematic */}
-      <HeroPipeline />
+      {/* ── Hero ────────────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden">
+        {/* Subtle radial glow */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-3xl" />
+        </div>
 
-      {/* Component B: Audit Trail / Diff Viewer */}
-      <DiffViewer />
+        <div className="relative max-w-4xl mx-auto px-6 pt-24 pb-16 text-center">
+          <p className="text-sm text-cyan-500 font-medium tracking-wide mb-6">
+            Autonomous CI/CD Gatekeeper
+          </p>
+          <h1 className="text-5xl md:text-7xl font-bold text-white leading-[1.1] tracking-tight">
+            The Flight Simulator
+            <br />
+            for Terraform.
+          </h1>
+          <p className="mt-6 text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+            Intercept broken IaC, sandbox it in LocalStack, and auto-heal AWS
+            API failures before deployment.
+          </p>
 
-      {/* Component C: Engineering Specs */}
-      <div id="specs">
-        <EngineeringSpecs />
+          {/* CTAs */}
+          <div className="mt-10 flex items-center justify-center gap-4">
+            <a
+              href="https://github.com/GOLDSTEALTH/ShadowPlane"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-white text-zinc-900 px-6 py-3 rounded-lg text-sm font-semibold hover:bg-zinc-200 transition-colors"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+              </svg>
+              View GitHub
+            </a>
+            <a
+              href="#specs"
+              className="inline-flex items-center gap-2 border border-zinc-700 text-zinc-300 px-6 py-3 rounded-lg text-sm font-semibold hover:border-zinc-500 hover:text-white transition-colors"
+            >
+              Read the Architecture
+              <span className="text-zinc-500">→</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Interactive Demo ─────────────────────────────────────────── */}
+      <section id="demo" className="px-6 pb-24">
+        <TerminalDiff />
+      </section>
+
+      {/* ── Divider with label ───────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="border-t border-zinc-800" />
       </div>
 
-      {/* Footer */}
-      <footer className="px-6 md:px-12 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border-t border-stone-300">
-        <div>
-          <span className="text-xs text-stone-500">
-            ShadowPlane · Autonomous CI/CD Gatekeeper
+      {/* ── Engineering Specs ────────────────────────────────────────── */}
+      <section id="specs" className="py-24">
+        <EngineeringSpecs />
+      </section>
+
+      {/* ── Footer ──────────────────────────────────────────────────── */}
+      <footer className="border-t border-zinc-800/60 py-8">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <span className="text-sm text-zinc-500">
+            ShadowPlane · © {new Date().getFullYear()} GOLDSTEALTH
           </span>
-          <span className="text-xs text-stone-400 ml-2">
-            © {new Date().getFullYear()} GOLDSTEALTH
-          </span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-[10px] text-stone-400 tracking-wider">
-            BUILT WITH: NEXT.JS · FASTAPI · LOCALSTACK · GEMINI
+          <span className="text-xs text-zinc-600 font-mono">
+            Next.js · FastAPI · LocalStack · Gemini
           </span>
         </div>
       </footer>
