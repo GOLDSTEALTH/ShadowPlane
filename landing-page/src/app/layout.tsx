@@ -37,7 +37,7 @@ export const metadata: Metadata = {
       "Intercept broken Terraform configurations, sandbox them in LocalStack, and auto-heal AWS API failures via the autonomous ShadowPatch engine.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/landingpage_preview.png",
         width: 1200,
         height: 630,
         alt: "ShadowPlane Platform",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     title: "ShadowPlane | The Flight Simulator for Terraform",
     description:
       "Intercept broken Terraform configurations, sandbox them in LocalStack, and auto-heal AWS API failures via the autonomous ShadowPatch engine.",
-    images: ["/og-image.png"],
+    images: ["/landingpage_preview.png"],
   },
 };
 
