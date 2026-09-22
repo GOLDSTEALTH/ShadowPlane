@@ -55,9 +55,9 @@ export default function FAQ() {
                 >
                   <span className="font-semibold text-zinc-100">{faq.question}</span>
                   <span
-                    className={\`text-zinc-500 transition-transform duration-300 \${
+                    className={`text-zinc-500 transition-transform duration-300 ${
                       isOpen ? "rotate-180" : ""
-                    }\`}
+                    }`}
                   >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
