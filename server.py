@@ -514,6 +514,10 @@ async def reset_circuit_breaker(terraform_dir: str) -> str:
     logger.info("reset_circuit_breaker result: %s", result)
     return result
 
-if __name__ == "__main__":
+def _cli_entry():
+    """Console-script entry point for `shadowplane-server`."""
     logger.info("Starting ShadowPlane-Gateway MCP server")
     mcp.run()
+
+if __name__ == "__main__":
+    _cli_entry()

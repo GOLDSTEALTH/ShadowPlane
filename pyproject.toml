@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shadowplane"
+dynamic = ["version"]
+description = "ShadowPlane — Autonomous Infrastructure Verification Pipeline. Intercepts Terraform deployments, runs them in a LocalStack sandbox, self-heals errors, and gates the CI/CD pipeline."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "GOLDSTEALTH"},
+]
+
+dependencies = [
+    "mcp<2.0.0",
+    "fastmcp",
+    "docker",
+    "fastapi",
+    "uvicorn",
+    "httpx",
+    "websockets",
+    "google-genai",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+]
+
+[project.scripts]
+# Available from ANY terminal after `pip install -e .`
+shadowplane        = "cli:main"
+shadowplane-server = "server:_cli_entry"
+shadowplane-engine = "main:_cli_entry"
+
+[tool.setuptools]
+py-modules = ["cli", "server", "main", "demo_loop", "circuit_breaker", "load_test", "web_server"]
+
+[tool.setuptools.packages.find]
+include = ["engine*", "skills*"]
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}

@@ -147,7 +147,8 @@ Return ONLY the raw, valid HCL code. No markdown or explanations.
             self.state_manager.restore_backup()
 
 
-if __name__ == "__main__":
+def _cli_entry():
+    """Console-script entry point for `shadowplane-engine`."""
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--target-dir", default="./demo-infra")
@@ -161,3 +162,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Fatal error: {e}")
         sys.exit(1)
+
+if __name__ == "__main__":
+    _cli_entry()
