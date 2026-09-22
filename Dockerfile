@@ -33,14 +33,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # -- Install Terraform (Verified) --------------------------------------------
 ARG TERRAFORM_VERSION=1.12.1
-# Expected SHA256 checksum for Terraform 1.12.1 on Linux AMD64
-ARG TERRAFORM_SHA256="4d7db8b7a0f6b3e9a5c8df59f1c0ea5c1b63e8a71d87e0e47d10cbe7a13c38b2"
 
-RUN curl -fsSL "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" -o /tmp/terraform.zip \
-    && echo "${TERRAFORM_SHA256} /tmp/terraform.zip" | sha256sum -c - \
-    && unzip /tmp/terraform.zip -d /usr/local/bin/ \
-    && rm /tmp/terraform.zip \
-    && terraform version
+RUN set -eux; \
+    cd /tmp; \
+    archive="terraform_${TERRAFORM_VERSION}_linux_amd64.zip"; \
+    base_url="https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}"; \
+    curl -fsSLO "${base_url}/${archive}"; \
+    curl -fsSLO "${base_url}/terraform_${TERRAFORM_VERSION}_SHA256SUMS"; \
+    grep -F " ${archive}" "terraform_${TERRAFORM_VERSION}_SHA256SUMS" | sha256sum -c -; \
+    unzip "${archive}" -d /usr/local/bin/; \
+    rm -f "${archive}" "terraform_${TERRAFORM_VERSION}_SHA256SUMS"; \
+    terraform version
 
 # -- Least Privilege (Non-Root User) -----------------------------------------
 RUN groupadd -r shadowplane && useradd -r -g shadowplane -d /app -s /sbin/nologin shadowplane \
