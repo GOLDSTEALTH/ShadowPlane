@@ -23,6 +23,39 @@ It strictly enforces system exit codes (`0` for Pass, `1` for Fail), ensuring yo
    - **`sys.exit(0)`**: Blast radius contained. Infrastructure verified.
    - **`sys.exit(1)`**: Maximum retries exhausted. The CI pipeline is hard-blocked.
 
+## Install
+
+**One-liner (recommended):**
+
+Windows (PowerShell):
+```powershell
+irm https://raw.githubusercontent.com/GOLDSTEALTH/ShadowPlane/main/install.ps1 | iex
+```
+
+Linux / macOS:
+```bash
+curl -sSL https://raw.githubusercontent.com/GOLDSTEALTH/ShadowPlane/main/install.sh | bash
+```
+
+**From PyPI:**
+```bash
+pip install shadowplane
+```
+
+**From source:**
+```bash
+git clone https://github.com/GOLDSTEALTH/ShadowPlane.git
+cd ShadowPlane
+pip install -e .
+```
+
+After install, three commands are available globally:
+```
+shadowplane             # Run the verification pipeline
+shadowplane-server      # Start the MCP gateway server
+shadowplane-engine      # Run the enterprise engine
+```
+
 ## Quick Start (GitHub Actions)
 
 ShadowPlane is completely headless and Dockerized. You can drop it directly into your `.github/workflows/deploy.yml` file to gatekeep your Terraform deployments.
