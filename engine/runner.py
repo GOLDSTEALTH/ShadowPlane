@@ -1,7 +1,12 @@
 import subprocess
 import os
+import sys
 from abc import ABC, abstractmethod
 from typing import Dict, Any
+
+# Add parent directory to path so we can import circuit_breaker
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from circuit_breaker import circuit_breaker, SYSTEM_OVERRIDE_MESSAGE
 
 class EmulatorConnector(ABC):
     @abstractmethod
@@ -107,8 +112,35 @@ class IaCRunner:
             self.connector.cleanup_overrides(target_dir)
 
     def apply(self, target_dir: str) -> Dict[str, Any]:
+        # ── Circuit Breaker: pre-check ────────────────────────────────────
+        if circuit_breaker.is_tripped(target_dir):
+            status = circuit_breaker.get_status(target_dir)
+            return {
+                "success": False,
+                "exit_code": -2,
+                "stdout": "",
+                "stderr": SYSTEM_OVERRIDE_MESSAGE.format(
+                    failure_count=status["failure_count"],
+                    terraform_dir=target_dir,
+                    window=status["window_seconds"],
+                ),
+            }
+
         self.connector.setup_overrides(target_dir)
         try:
-            return self._run([self.binary, "apply", "-auto-approve", "-json"], target_dir)
+            result = self._run([self.binary, "apply", "-auto-approve", "-json"], target_dir)
         finally:
             self.connector.cleanup_overrides(target_dir)
+
+        # ── Circuit Breaker: post-check ───────────────────────────────────
+        if result["success"]:
+            circuit_breaker.record_success(target_dir)
+        else:
+            tripped = circuit_breaker.check_and_record_failure(target_dir)
+            if tripped:
+                result["stderr"] = SYSTEM_OVERRIDE_MESSAGE.format(
+                    failure_count=circuit_breaker.get_status(target_dir)["failure_count"],
+                    terraform_dir=target_dir,
+                    window=circuit_breaker.get_status(target_dir)["window_seconds"],
+                )
+        return result

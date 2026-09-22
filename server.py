@@ -8,6 +8,7 @@ import asyncio
 import socket
 import time
 from mcp.server.fastmcp import FastMCP
+from circuit_breaker import circuit_breaker, SYSTEM_OVERRIDE_MESSAGE
 
 # Configure logging to write to stderr so it does not interfere with the stdin/stdout communication channel of MCP
 logging.basicConfig(
@@ -426,12 +427,46 @@ async def clone_and_deploy(terraform_dir: str) -> str:
         terraform_dir: Path to the directory containing Terraform files.
     """
     logger.info("clone_and_deploy tool invoked with path: %s", terraform_dir)
+
+    # ── Circuit Breaker: pre-check ────────────────────────────────────────
+    if circuit_breaker.is_tripped(terraform_dir):
+        status = circuit_breaker.get_status(terraform_dir)
+        logger.error(
+            "CircuitBreaker BLOCKED clone_and_deploy for '%s' — breaker is tripped "
+            "(failures=%d, max=%d). Returning hard-stop message.",
+            terraform_dir,
+            status["failure_count"],
+            status["max_failures"],
+        )
+        return SYSTEM_OVERRIDE_MESSAGE.format(
+            failure_count=status["failure_count"],
+            terraform_dir=terraform_dir,
+            window=status["window_seconds"],
+        )
+
     deployment_id = str(uuid.uuid4())
     logger.info("Generated deployment ID: %s", deployment_id)
-    
-    # Run the blocking logic in a separate thread to avoid blocking the asyncio event loop
-    stdout = await asyncio.to_thread(run_terraform_deploy_sync, terraform_dir, deployment_id)
-    return stdout
+
+    # Run the blocking Terraform logic in a thread
+    executor = TerraformExecutor(terraform_dir, deployment_id)
+    result = await asyncio.to_thread(executor.execute)
+
+    # ── Circuit Breaker: post-check ───────────────────────────────────────
+    if result["success"]:
+        circuit_breaker.record_success(terraform_dir)
+        return result["stdout"]
+    else:
+        tripped = circuit_breaker.check_and_record_failure(terraform_dir)
+        if tripped:
+            # Return the hard-stop override instead of the Terraform error
+            status = circuit_breaker.get_status(terraform_dir)
+            return SYSTEM_OVERRIDE_MESSAGE.format(
+                failure_count=status["failure_count"],
+                terraform_dir=terraform_dir,
+                window=status["window_seconds"],
+            )
+        # Not yet tripped — return the normal error so the agent can try to fix it
+        raise RuntimeError(f"Terraform execution failed: {result['error_log']}")
 
 @mcp.tool()
 async def read_sandbox_logs(deployment_id: str) -> str:
@@ -463,6 +498,21 @@ async def read_sandbox_logs(deployment_id: str) -> str:
     if record["stderr"]:
         return record["stderr"]
     return record["stdout"]
+
+@mcp.tool()
+async def reset_circuit_breaker(terraform_dir: str) -> str:
+    """Reset the circuit breaker for a Terraform directory after human intervention.
+
+    Use this tool after diagnosing and fixing the root cause of repeated Terraform
+    failures. This unblocks clone_and_deploy for the specified directory.
+
+    Args:
+        terraform_dir: Path to the Terraform directory whose circuit breaker should be reset.
+    """
+    logger.info("reset_circuit_breaker tool invoked for: %s", terraform_dir)
+    result = circuit_breaker.reset(terraform_dir)
+    logger.info("reset_circuit_breaker result: %s", result)
+    return result
 
 if __name__ == "__main__":
     logger.info("Starting ShadowPlane-Gateway MCP server")
