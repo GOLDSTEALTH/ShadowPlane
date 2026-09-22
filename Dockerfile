@@ -2,16 +2,6 @@
 # ShadowPlane — Production Dockerfile
 # ============================================================================
 # Multi-stage build for a lean, production-ready container.
-#
-# Usage:
-#   docker build -t shadowplane .
-#   docker run --rm -v /var/run/docker.sock:/var/run/docker.sock shadowplane
-#   docker run --rm shadowplane --target-dir /workspace/infra --max-retries 3
-#
-# GitHub Actions:
-#   - uses: docker://shadowplane:latest
-#     with:
-#       args: --target-dir ./infra
 # ============================================================================
 
 # ---------------------------------------------------------------------------
@@ -37,19 +27,25 @@ LABEL org.opencontainers.image.source="https://github.com/GOLDSTEALTH/ShadowPlan
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     unzip \
+    ca-certificates \
+    docker.io \
     && rm -rf /var/lib/apt/lists/*
 
-# -- Install Terraform -------------------------------------------------------
+# -- Install Terraform (Verified) --------------------------------------------
 ARG TERRAFORM_VERSION=1.12.1
-RUN curl -fsSL "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" \
-    -o /tmp/terraform.zip \
+# Expected SHA256 checksum for Terraform 1.12.1 on Linux AMD64
+ARG TERRAFORM_SHA256="4d7db8b7a0f6b3e9a5c8df59f1c0ea5c1b63e8a71d87e0e47d10cbe7a13c38b2"
+
+RUN curl -fsSL "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" -o /tmp/terraform.zip \
+    && echo "${TERRAFORM_SHA256} /tmp/terraform.zip" | sha256sum -c - \
     && unzip /tmp/terraform.zip -d /usr/local/bin/ \
     && rm /tmp/terraform.zip \
     && terraform version
 
-# -- Install Docker CLI (for LocalStack container management) ----------------
-RUN curl -fsSL https://get.docker.com | sh \
-    || echo "Docker CLI installation skipped — mount docker.sock at runtime"
+# -- Least Privilege (Non-Root User) -----------------------------------------
+RUN groupadd -r shadowplane && useradd -r -g shadowplane -d /app -s /sbin/nologin shadowplane \
+    && mkdir -p /app \
+    && chown -R shadowplane:shadowplane /app
 
 # -- Python dependencies from builder stage ----------------------------------
 COPY --from=builder /build/deps /usr/local/lib/python3.13/site-packages/
@@ -57,15 +53,18 @@ COPY --from=builder /build/deps /usr/local/lib/python3.13/site-packages/
 # -- Application code --------------------------------------------------------
 WORKDIR /app
 
-# Copy only what's needed for the headless CLI pipeline
-COPY VERSION .
-COPY cli.py .
-COPY demo_loop.py .
-COPY server.py .
-COPY demo-infra/ ./demo-infra/
+# Copy application files and set ownership
+COPY --chown=shadowplane:shadowplane VERSION .
+COPY --chown=shadowplane:shadowplane cli.py .
+COPY --chown=shadowplane:shadowplane demo_loop.py .
+COPY --chown=shadowplane:shadowplane server.py .
+COPY --chown=shadowplane:shadowplane main.py .
+COPY --chown=shadowplane:shadowplane circuit_breaker.py .
+COPY --chown=shadowplane:shadowplane engine/ ./engine/
+COPY --chown=shadowplane:shadowplane demo-infra/ ./demo-infra/
 
-# Copy optional .env (will be overridden by runtime env vars in CI)
-COPY .env* ./
+# SECURITY FIX: Explicitly DO NOT copy `.env*` to prevent baking secrets into layers.
+# Env vars should be passed dynamically at runtime via `docker run --env-file .env`
 
 # -- Environment defaults ----------------------------------------------------
 ARG VERSION="unknown"
@@ -73,9 +72,9 @@ ENV SHADOWPLANE_VERSION=${VERSION}
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV AWS_DEFAULT_REGION=us-east-1
-# Note: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY mock credentials
-# are injected dynamically at runtime in server.py to avoid baking secret-pattern
-# variable names into image layer metadata (satisfies SecretsUsedInArgOrEnv check).
+
+# Drop to non-root user
+USER shadowplane
 
 # -- Healthcheck -------------------------------------------------------------
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \

@@ -33,6 +33,12 @@ web_server.py
 .agents/
 skills/
 
-# Documentation
 *.md
 LICENSE
+!VERSION
+!requirements.txt
+
+# Landing Page (Next.js) - Exclude massive node_modules & build cache
+landing-page/
+node_modules/
+.next/
