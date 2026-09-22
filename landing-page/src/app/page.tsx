@@ -3,6 +3,7 @@ import TerminalDiff from "@/components/TerminalDiff";
 import ScrollPipeline from "@/components/ScrollPipeline";
 import IntegrationMatrix from "@/components/IntegrationMatrix";
 import BusinessROI from "@/components/BusinessROI";
+import FAQ from "@/components/FAQ";
 import Quickstart from "@/components/Quickstart";
 
 export default function Home() {
@@ -82,6 +83,9 @@ export default function Home() {
 
       {/* ── Business ROI ─────────────────────────────────────────────── */}
       <BusinessROI />
+
+      {/* ── FAQ ──────────────────────────────────────────────────────── */}
+      <FAQ />
 
       {/* ── Quickstart ───────────────────────────────────────────────── */}
       <Quickstart />

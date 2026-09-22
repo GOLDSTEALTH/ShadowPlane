@@ -1,6 +1,18 @@
 export default function EngineeringSpecs() {
   const specs = [
     {
+      icon: "🧠",
+      header: "Bring-Your-Own-Model",
+      body: "Native LiteLLM integration supports GPT-4o, Claude 3.5, Gemini 3.7, and Ollama. Enforced by an AST failsafe parser.",
+      tag: "BYOM",
+    },
+    {
+      icon: "🧊",
+      header: "Two-Stage Pre-Warm Sandbox",
+      body: "Safely simulates production state updates. Clones 'main' to build a mock environment, then applies your PR branch on top.",
+      tag: "SAFE-STATE",
+    },
+    {
       icon: "🛡",
       header: "Zero-Trust Isolation",
       body: "Shared-kernel Docker MVP transitioning to Firecracker microVMs. Strict zero network egress to live AWS environments.",

@@ -6,6 +6,27 @@ import { motion, useScroll, useTransform, useInView } from "framer-motion";
 /* ── Node data ─────────────────────────────────────────────────────── */
 const nodes = [
   {
+    side: "right" as const,
+    tag: "STATE",
+    title: "Pre-Warm Sandbox",
+    body: "Clones your 'main' branch and applies it locally. Then checks out your Pull Request branch to test the exact infrastructure transition safely.",
+    visual: (
+      <div className="font-mono text-xs leading-6 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre">
+        <span className="text-zinc-600">$</span>{" "}
+        <span className="text-cyan-400">git checkout</span>{" "}
+        <span className="text-emerald-400">main</span>{" "}
+        <span className="text-zinc-500">&&</span>{" "}
+        <span className="text-cyan-400">terraform apply</span>
+        <br />
+        <span className="text-zinc-600">$</span>{" "}
+        <span className="text-cyan-400">git checkout</span>{" "}
+        <span className="text-yellow-400">feature/PR</span>{" "}
+        <span className="text-zinc-500">&&</span>{" "}
+        <span className="text-cyan-400">terraform apply</span>
+      </div>
+    ),
+  },
+  {
     side: "left" as const,
     tag: "ISOLATION",
     title: "LocalStack Isolation",
