@@ -107,6 +107,7 @@ Exit codes:
 Examples:
   python cli.py --target-dir ./demo-infra
   python cli.py --target-dir ./infra --max-retries 3
+  python cli.py --target-dir ./infra --ai-model gpt-4o
   docker run shadowplane --target-dir /workspace/infra
 """,
     )
@@ -121,6 +122,18 @@ Examples:
         type=int,
         default=5,
         help="Maximum self-healing retry attempts before failing (default: 5)",
+    )
+    parser.add_argument(
+        "--ai-model",
+        type=str,
+        default="gemini/gemini-3.7-flash",
+        help="The AI model to use for self-healing (e.g., gpt-4o, claude-3-5-sonnet, ollama/llama3). Default: gemini/gemini-3.7-flash",
+    )
+    parser.add_argument(
+        "--ai-base-url",
+        type=str,
+        default=None,
+        help="Optional custom base URL for the AI provider (e.g., http://localhost:11434 for Ollama)",
     )
     parser.add_argument(
         "--version",

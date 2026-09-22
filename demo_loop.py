@@ -138,154 +138,58 @@ async def reset_main_tf(yield_event=None):
     await _log(yield_event, f"  [RESET] main.tf written  — broken bucket = {BROKEN_BUCKET!r}")
     await _log(yield_event, f"  [INFO]  Run ID = {RUN_ID}  |  Fixed bucket will be = {FIXED_BUCKET!r}")
 
-# ---------------------------------------------------------------------------
-# Self-healing patch engine (Gemini AI-powered)
-# ---------------------------------------------------------------------------
+from engine.ai import repair_terraform_code
 
-GEMINI_MODEL = "gemini-3.7-flash"
-GEMINI_FALLBACK_MODEL = "gemini-3.6-flash"
-
-SYSTEM_INSTRUCTION = (
-    "You are an expert AWS Terraform engineer. Fix the provided Terraform code "
-    "to resolve the AWS API error. You must return ONLY the raw, valid HCL code. "
-    "Do not include markdown formatting, backticks (```hcl), explanations, or "
-    "apologies. Your exact output will be written directly to disk."
-)
-
-
-def _sanitize_hcl(raw: str) -> str:
+async def fix_main_tf(error_text: str, ai_model: str, ai_base_url: str = None, yield_event=None) -> bool:
     """
-    Strip markdown code fences and language tags from LLM output.
-    LLMs frequently wrap code in ```hcl ... ``` despite instructions not to.
+    Use the unified AI Engine (LiteLLM) to dynamically analyse and repair broken Terraform code.
     """
-    text = raw.strip()
-    # Remove leading ```hcl, ```terraform, or bare ```
-    text = re.sub(r"^```(?:hcl|terraform|tf)?\s*\n?", "", text)
-    # Remove trailing ```
-    text = re.sub(r"\n?```\s*$", "", text)
-    return text.strip() + "\n"
-
-
-async def fix_main_tf(error_text: str, yield_event=None) -> bool:
-    """
-    Use Gemini AI to dynamically analyse and repair broken Terraform code.
-
-    1. Reads the current main.tf content
-    2. Sends it + the error logs to Gemini 3.7 Flash
-    3. Writes the AI-patched HCL back to disk
-    4. Emits diff events to the Web UI
-
-    Returns True if the AI successfully produced a fix, False otherwise.
-    """
-    await _log(yield_event, "\n  [ANALYSE] Invoking Gemini AI to diagnose and repair Terraform error...")
+    await _log(yield_event, f"\n  [ANALYSE] Invoking AI ({ai_model}) to diagnose and repair Terraform error...")
 
     # Read current (broken) content
     with open(MAIN_TF_PATH, "r", encoding="utf-8") as fh:
         original = fh.read()
 
-    # Build the user prompt
-    user_prompt = (
-        f"The following Terraform code failed during `terraform apply`.\n\n"
-        f"## Terraform Error Output\n```\n{error_text}\n```\n\n"
-        f"## Current main.tf\n```hcl\n{original}\n```\n\n"
-        f"Fix the code so it provisions successfully against AWS (LocalStack). "
-        f"Return ONLY the corrected HCL — nothing else."
+    patched = await repair_terraform_code(
+        model=ai_model,
+        base_url=ai_base_url,
+        error_text=error_text,
+        current_hcl=original
     )
 
-    try:
-        # Initialize the Gemini client
-        api_key = os.environ.get("GEMINI_API_KEY")
-        if not api_key or api_key == "your_gemini_api_key_here":
-            await _log(yield_event, "  [WARN]    GEMINI_API_KEY not configured. Cannot invoke AI repair.", "warn")
-            return False
-
-        client = genai.Client(api_key=api_key)
-
-
-
-        # Call Gemini with exponential backoff + model fallback
-        MAX_API_RETRIES = 3
-        BASE_DELAY = 2  # seconds
-        response = None
-        models_to_try = [GEMINI_MODEL, GEMINI_FALLBACK_MODEL]
-
-        for model_name in models_to_try:
-            await _log(yield_event, f"  [AI]      Model: {model_name}")
-            await _log(yield_event, f"  [AI]      Sending {len(original)} bytes of HCL + error context...")
-
-            model_succeeded = False
-            for attempt in range(1, MAX_API_RETRIES + 1):
-                try:
-                    response = await asyncio.to_thread(
-                        client.models.generate_content,
-                        model=model_name,
-                        contents=user_prompt,
-                        config=types.GenerateContentConfig(
-                            system_instruction=SYSTEM_INSTRUCTION,
-                            temperature=0.1,
-                        ),
-                    )
-                    model_succeeded = True
-                    break  # Success — exit retry loop
-                except Exception as api_err:
-                    err_str = str(api_err)
-                    is_retryable = any(code in err_str for code in ("503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "overloaded"))
-                    if is_retryable and attempt < MAX_API_RETRIES:
-                        delay = BASE_DELAY ** attempt  # 2s, 4s, 8s
-                        await _log(yield_event, f"  [RETRY]   {model_name} returned transient error (attempt {attempt}/{MAX_API_RETRIES}). Retrying in {delay}s...", "warn")
-                        await asyncio.sleep(delay)
-                    elif is_retryable and model_name != models_to_try[-1]:
-                        await _log(yield_event, f"  [FALLBACK] {model_name} exhausted retries. Falling back to {GEMINI_FALLBACK_MODEL}...", "warn")
-                        break  # Break inner loop, try next model
-                    else:
-                        raise  # Non-retryable or last model exhausted — propagate
-
-            if model_succeeded:
-                break
-
-        if not response or not response.text:
-            await _log(yield_event, "  [WARN]    Gemini returned an empty response. Cannot auto-repair.", "warn")
-            return False
-
-        # Sanitize the response (strip markdown fences)
-        patched = _sanitize_hcl(response.text)
-
-        await _log(yield_event, f"  [AI]      Received {len(patched)} bytes of patched HCL.")
-
-        # Verify the AI actually changed something
-        if patched.strip() == original.strip():
-            await _log(yield_event, "  [WARN]    AI returned identical code. No fix applied.", "warn")
-            return False
-
-        # Write the patched code to disk
-        with open(MAIN_TF_PATH, "w", encoding="utf-8") as fh:
-            fh.write(patched)
-
-        await _log(yield_event, "  [FIX]     Gemini AI patch applied successfully.", "success")
-        await _log(yield_event, "  [SAVED]   main.tf written to disk.\n")
-
-        # Emit diff event to Web UI
-        await _emit(yield_event, {
-            "type": "diff",
-            "message": f"Gemini AI ({GEMINI_MODEL}) autonomous repair",
-            "original": original,
-            "patched": patched,
-        })
-        return True
-
-    except Exception as e:
-        await _log(yield_event, f"  [ERROR]   Gemini API call failed: {e}", "error")
-        await _log(yield_event, "  [WARN]    Falling back — cannot auto-repair.\n", "warn")
+    if not patched:
+        await _log(yield_event, "  [WARN]    AI repair failed or returned empty response.", "warn")
         return False
+
+    if patched.strip() == original.strip():
+        await _log(yield_event, "  [WARN]    AI returned identical code. No fix applied.", "warn")
+        return False
+
+    # Write the patched code to disk
+    with open(MAIN_TF_PATH, "w", encoding="utf-8") as fh:
+        fh.write(patched)
+
+    await _log(yield_event, "  [FIX]     AI patch applied successfully.", "success")
+    await _log(yield_event, "  [SAVED]   main.tf written to disk.\n")
+
+    # Emit diff event to Web UI
+    await _emit(yield_event, {
+        "type": "diff",
+        "message": f"AI ({ai_model}) autonomous repair",
+        "original": original,
+        "patched": patched,
+    })
+    return True
 
 
 # ---------------------------------------------------------------------------
 # Main autonomous loop
 # ---------------------------------------------------------------------------
 
-async def main(yield_event=None, target_dir=None, max_retries=None):
+async def main(yield_event=None, target_dir=None, max_retries=None, ai_model="gemini/gemini-3.7-flash", ai_base_url=None):
     """
     Run the autonomous verification loop.
+
 
     Args:
         yield_event: Optional async callback for streaming events to web UI.
@@ -366,7 +270,7 @@ async def main(yield_event=None, target_dir=None, max_retries=None):
 
             if attempt < MAX_RETRIES:
                 await _emit(yield_event, {"type": "step", "step": "analysis"})
-                fixed = await fix_main_tf(error_text, yield_event)
+                fixed = await fix_main_tf(error_text, ai_model, ai_base_url, yield_event)
                 if not fixed:
                     await _log(yield_event, f"+--- [HALT] No auto-repair available. Halting loop.\n", "error")
                     break

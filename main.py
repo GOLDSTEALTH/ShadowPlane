@@ -86,23 +86,22 @@ class ShadowPlaneEngine:
                 for attempt in range(1, max_ai_retries + 1):
                     self.log.info(f"  -> [AI Attempt {attempt}] Prompting ShadowPatch Engine...")
                     
-                    prompt = f"""
-You are an expert AWS OpenTofu/Terraform engineer.
-Fix the provided code to resolve the following error:
-{error_context}
-
-Original Code:
-{current_hcl}
-
-Return ONLY the raw, valid HCL code. No markdown or explanations.
-"""
                     try:
-                        response = self.llm_client.models.generate_content(
-                            model=self.model,
-                            contents=prompt
-                        )
-                        patched_hcl = self._sanitize_hcl(response.text)
+                        import asyncio
+                        from engine.ai import repair_terraform_code
                         
+                        # Note: Checkov context requires a slightly different prompt but we can pass it as error_text
+                        patched_hcl = asyncio.run(repair_terraform_code(
+                            model=self.model,
+                            error_text=error_context,
+                            current_hcl=current_hcl,
+                            base_url=None
+                        ))
+                        
+                        if not patched_hcl:
+                            self.log.info("  -> AI returned empty response. Aborting.")
+                            break
+                            
                         # Write patch
                         with open(main_tf_path, "w") as f:
                             f.write(patched_hcl)
