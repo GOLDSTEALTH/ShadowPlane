@@ -186,10 +186,9 @@ async def fix_main_tf(error_text: str, ai_model: str, ai_base_url: str = None, y
 # Main autonomous loop
 # ---------------------------------------------------------------------------
 
-async def main(yield_event=None, target_dir=None, max_retries=None, ai_model="gemini/gemini-3.7-flash", ai_base_url=None):
+async def main(yield_event=None, target_dir=None, max_retries=None, ai_model="gemini/gemini-3.7-flash", ai_base_url=None, github_repo=None, base_branch="main", pr_branch=None):
     """
     Run the autonomous verification loop.
-
 
     Args:
         yield_event: Optional async callback for streaming events to web UI.
@@ -223,9 +222,35 @@ async def main(yield_event=None, target_dir=None, max_retries=None, ai_model="ge
     await _log(yield_event, f"+{divider}+\n")
 
     await _emit(yield_event, {"type": "step", "step": "preflight"})
-    await _log(yield_event, "[PRE-FLIGHT] Resetting demo environment for a clean run...")
-    await reset_terraform_state(yield_event)
-    await reset_main_tf(yield_event)
+    
+    if github_repo and pr_branch:
+        import tempfile
+        from engine.git_utils import clone_and_checkout, checkout_branch
+        await _log(yield_event, f"\n[STEP 0] PRE-WARM SANDBOX")
+        await _log(yield_event, f"  -> Cloning {github_repo} into sandbox...")
+        repo_url = f"https://github.com/{github_repo}.git"
+        workspace_dir = os.path.join(tempfile.gettempdir(), f"shadowplane-{RUN_ID}")
+        
+        success = clone_and_checkout(repo_url, base_branch, pr_branch, workspace_dir)
+        if not success:
+            raise Exception("Git Clone Failed")
+            
+        DEMO_INFRA_DIR = workspace_dir
+        MAIN_TF_PATH = os.path.join(DEMO_INFRA_DIR, "main.tf")
+        
+        await _log(yield_event, f"  -> Pre-Warming Base Branch ({base_branch})...")
+        try:
+            await mcp.call_tool("clone_and_deploy", {"terraform_dir": DEMO_INFRA_DIR})
+            await _log(yield_event, "  -> Pre-Warm Successful. Mock production state created.", "success")
+        except Exception as e:
+            await _log(yield_event, "  [WARN] Pre-warm apply failed. Proceeding anyway...", "warn")
+            
+        await _log(yield_event, f"\n[STEP 1] TRANSITION TO PR BRANCH ({pr_branch})")
+        checkout_branch(workspace_dir, pr_branch)
+    else:
+        await _log(yield_event, "[PRE-FLIGHT] Resetting demo environment for a clean run...")
+        await reset_terraform_state(yield_event)
+        await reset_main_tf(yield_event)
     await _log(yield_event, "")
 
     success = False
