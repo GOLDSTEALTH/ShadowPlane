@@ -42,7 +42,7 @@ export default function HeroPipeline() {
       {/* Header */}
       <div className="border-b border-stone-300 px-6 py-8 md:px-12 md:py-12">
         <p className="text-xs tracking-[0.3em] text-stone-500 uppercase mb-3">
-          ShadowPlane v1.0.0 · Autonomous CI/CD Gatekeeper
+          ShadowPlane v1.1.0 · Autonomous CI/CD Gatekeeper
         </p>
         <h1 className="text-3xl md:text-5xl font-bold text-stone-900 leading-tight">
           The Flight Simulator

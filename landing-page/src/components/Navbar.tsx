@@ -25,7 +25,7 @@ export default function Navbar() {
             ShadowPlane
           </a>
           <span className="text-[9px] sm:text-[10px] text-zinc-400 border border-zinc-800 rounded-full px-1.5 py-0.5 font-mono">
-            v1.0.0
+            v1.1.0
           </span>
         </div>
 
