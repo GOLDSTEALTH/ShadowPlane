@@ -152,7 +152,7 @@ class TerraformExecutor:
         'stdout': str, 'errors': list[dict]} (Prompts 1, 4)
     """
 
-    LOCALSTACK_ENDPOINT = "http://127.0.0.1:4566"
+    LOCALSTACK_ENDPOINT = os.getenv("AWS_ENDPOINT_URL", "http://127.0.0.1:4566")
     TIMEOUT_SECONDS = 60
 
     LOCALSTACK_OVERRIDE_TF = """\
@@ -220,8 +220,8 @@ provider "aws" {
 
     def _write_override(self):
         """Write the LocalStack provider override file into the Terraform dir."""
-        with open(self.override_file, "w", encoding="utf-8") as f:
-            f.write(self.LOCALSTACK_OVERRIDE_TF)
+        with open(self.override_file, "w", encoding="utf-8") as f:  # Write override with dynamically resolved LocalStack endpoint
+            f.write(self.LOCALSTACK_OVERRIDE_TF.replace("http://127.0.0.1:4566", self.LOCALSTACK_ENDPOINT))
 
     def _cleanup_override(self):
         """Remove the temporary override file."""

@@ -30,8 +30,9 @@ class LocalStackConnector(EmulatorConnector):
         }
     
     def setup_overrides(self, target_dir: str):
-        override_hcl = """
-provider "aws" {
+        endpoint = os.getenv("AWS_ENDPOINT_URL", "http://127.0.0.1:4566")
+        override_hcl = f"""
+provider "aws" {{
   access_key                  = "test"
   secret_key                  = "test"
   region                      = "us-east-1"
@@ -39,14 +40,14 @@ provider "aws" {
   skip_credentials_validation = true
   skip_metadata_api_check     = true
   skip_requesting_account_id  = true
-  endpoints {
-    s3       = "http://127.0.0.1:4566"
-    dynamodb = "http://127.0.0.1:4566"
-    iam      = "http://127.0.0.1:4566"
-    sts      = "http://127.0.0.1:4566"
-    ec2      = "http://127.0.0.1:4566"
-  }
-}
+  endpoints {{
+    s3       = "{endpoint}"
+    dynamodb = "{endpoint}"
+    iam      = "{endpoint}"
+    sts      = "{endpoint}"
+    ec2      = "{endpoint}"
+  }}
+}}
 """
         with open(os.path.join(target_dir, "localstack_override_providers.tf"), "w") as f:
             f.write(override_hcl)

@@ -1,6 +1,6 @@
 .PHONY: help build run test
 
-VERSION := $(shell cat VERSION)
+VERSION := $(strip $(shell cat VERSION))
 IMAGE_NAME := shadowplane
 
 help:
