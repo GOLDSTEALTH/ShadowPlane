@@ -64,7 +64,7 @@ export default function Home() {
       </section>
 
       {/* ── Interactive Demo ─────────────────────────────────────────── */}
-      <section id="demo" className="px-6 pb-24">
+      <section id="demo" className="px-6 pb-24 scroll-mt-28">
         <TerminalDiff />
       </section>
 
@@ -74,7 +74,7 @@ export default function Home() {
       </div>
 
       {/* ── Engineering Specs ────────────────────────────────────────── */}
-      <section id="specs" className="pt-24">
+      <section id="specs" className="pt-24 scroll-mt-28">
         <ScrollPipeline />
       </section>
 
