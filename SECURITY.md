@@ -15,7 +15,7 @@ We take the security of ShadowPlane seriously. If you believe you have found a s
 
 **DO NOT create a public GitHub issue for security vulnerabilities.**
 
-Instead, please email **security@goldstealth.dev** (or the email address listed in the maintainer's GitHub profile) with:
+Instead, please email **syedaamairshareef@gmail.com* with:
 1. A description of the vulnerability.
 2. Steps to reproduce the issue.
 3. The impact of the vulnerability.
