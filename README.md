@@ -154,7 +154,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: ShadowPlane Gatekeeper
-        uses: docker://goldstealth/shadowplane:2.1.0
+        uses: docker://goldsteatlh/shadowplane:2.1.0
         with:
           args: --target-dir ./infra --max-retries 5
         env:
@@ -170,7 +170,7 @@ To run the gatekeeper locally on your workstation to test infrastructure patches
 docker run --rm \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $(pwd)/infra:/app/infra \
-  goldstealth/shadowplane:2.1.0 \
+  goldsteatlh/shadowplane:2.1.0 \
   --target-dir ./infra
 ```
 
@@ -178,7 +178,7 @@ docker run --rm \
 
 ShadowPlane strictly follows [Semantic Versioning (SemVer)](https://semver.org/). 
 
-The current version is defined in the `VERSION` file. When referencing ShadowPlane in your CI/CD pipelines, **always pin your workflows to a specific major/minor tag** (e.g., `docker://goldstealth/shadowplane:2.1.0`) to prevent breaking changes from interrupting your deployments.
+The current version is defined in the `VERSION` file. When referencing ShadowPlane in your CI/CD pipelines, **always pin your workflows to a specific major/minor tag** (e.g., `docker://goldsteatlh/shadowplane:2.1.0`) to prevent breaking changes from interrupting your deployments.
 
 ## Development
 
