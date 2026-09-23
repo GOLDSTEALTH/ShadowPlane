@@ -1,3 +1,4 @@
+LICENSE
 README.md
 VERSION
 circuit_breaker.py
@@ -9,8 +10,12 @@ pyproject.toml
 server.py
 web_server.py
 engine/__init__.py
+engine/ai.py
+engine/constants.py
+engine/git_utils.py
 engine/logger.py
 engine/notifications.py
+engine/pipeline.py
 engine/runner.py
 engine/security.py
 engine/state_manager.py

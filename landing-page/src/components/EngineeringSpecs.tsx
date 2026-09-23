@@ -35,7 +35,7 @@ export default function EngineeringSpecs() {
       header: "Security Scanning",
       body: "Integrated Checkov static analysis with fail-closed enforcement. Missing scanner binary blocks the pipeline, not bypasses it.",
       tag: "SCANNING",
-    },,
+    },
   ];
 
   return (
