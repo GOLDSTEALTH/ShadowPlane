@@ -14,8 +14,7 @@ authors = [
 ]
 
 dependencies = [
-    "mcp<2.0.0",
-    "fastmcp",
+    "mcp>=1.0,<2.0",
     "docker",
     "fastapi",
     "uvicorn",

@@ -1,5 +1,5 @@
 # Core MCP server
-mcp[cli]>=1.0.0
+mcp>=1.0,<2.0
 
 # AI engine
 litellm>=1.0.0

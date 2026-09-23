@@ -1,5 +1,4 @@
-mcp<2.0.0
-fastmcp
+mcp<2.0,>=1.0
 docker
 fastapi
 uvicorn

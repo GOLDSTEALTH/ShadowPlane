@@ -7,8 +7,7 @@ License: MIT
 Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: mcp<2.0.0
-Requires-Dist: fastmcp
+Requires-Dist: mcp<2.0,>=1.0
 Requires-Dist: docker
 Requires-Dist: fastapi
 Requires-Dist: uvicorn
