@@ -24,9 +24,9 @@ It strictly enforces system exit codes (`0` for Pass, `1` for Fail), ensuring yo
 3. **Change-Risk Intelligence**: It runs `terraform plan -json` to proactively detect high-risk changes (database deletions, IAM broadening).
 4. **Deploy & Hash**: It applies the sandbox deployment and generates a tamper-evident evidence hash.
 5. **Circuit Breaker**: A built-in safety net prevents runaway AI retry loops.
-5. **Gatekeep**: 
-   - **`sys.exit(0)`**: Blast radius contained. Infrastructure verified.
-   - **`sys.exit(1)`**: Maximum retries exhausted. The CI pipeline is hard-blocked.
+6. **Gatekeep**: 
+   - **`sys.exit(0)`**: Blast radius contained. Risk verified as safe.
+   - **`sys.exit(1)`**: Critical risk detected or max failures exhausted. The CI pipeline is hard-blocked.
 
 ## Install
 
@@ -79,7 +79,7 @@ shadowplane-engine      Run the enterprise engine
 # Verify infrastructure in a directory
 shadowplane --target-dir ./my-infra
 
-# Set max self-healing retries
+# Set max execution attempts before circuit breaker trips
 shadowplane --target-dir ./infra --max-retries 3
 
 # Check version
@@ -109,7 +109,7 @@ shadowplane-server
 
 ### `shadowplane-engine` — Enterprise Engine
 
-Runs the full AI-powered pipeline with Gemini integration, Checkov security scanning, and Slack notifications:
+Runs the full Verification Gateway pipeline with Change-Risk Intelligence, Checkov security scanning, and Slack notifications:
 
 ```bash
 shadowplane-engine --target-dir ./infra --pr 42
