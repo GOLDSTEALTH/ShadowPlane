@@ -179,6 +179,8 @@ async def run(args):
     success = await demo_loop.main(
         target_dir=target,
         max_retries=args.max_retries,
+        ai_model=args.ai_model,
+        ai_base_url=args.ai_base_url,
     )
     elapsed = time.monotonic() - start_time
 

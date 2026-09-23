@@ -25,10 +25,16 @@ class CheckovValidator:
 
             try:
                 parsed = json.loads(result.stdout)
+                # Handle multi-framework output: aggregate failures from ALL frameworks
                 if isinstance(parsed, list):
-                    parsed = parsed[0]
-                
-                failed_checks = parsed.get("results", {}).get("failed_checks", [])
+                    all_failed = []
+                    for framework_result in parsed:
+                        all_failed.extend(
+                            framework_result.get("results", {}).get("failed_checks", [])
+                        )
+                    failed_checks = all_failed
+                else:
+                    failed_checks = parsed.get("results", {}).get("failed_checks", [])
                 
                 if not failed_checks:
                     return {"passed": True, "failed_checks": []}
@@ -46,6 +52,6 @@ class CheckovValidator:
                 return {"passed": False, "failed_checks": [], "raw": result.stdout}
 
         except FileNotFoundError:
-            # Checkov not installed
-            print("[Checkov] Binary not found. Skipping shift-left security scan.")
-            return {"passed": True, "failed_checks": []}
+            # Checkov not installed — FAIL CLOSED. Security scanning is mandatory.
+            print("[Checkov] ERROR: Binary not found. Security scan BLOCKED (fail-closed).")
+            return {"passed": False, "failed_checks": [{"check_id": "SHADOWPLANE_CHECKOV_MISSING", "check_name": "Checkov binary not installed", "resource": "N/A"}]}

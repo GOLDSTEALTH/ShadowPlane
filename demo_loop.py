@@ -30,6 +30,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="repla
 # Resolve server.py from the same directory as this script
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from server import mcp  # noqa: E402
+from circuit_breaker import CircuitBreakerError
 
 DEMO_INFRA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "demo-infra")
 MAIN_TF_PATH   = os.path.join(DEMO_INFRA_DIR, "main.tf")
@@ -243,14 +244,32 @@ async def main(yield_event=None, target_dir=None, max_retries=None, ai_model="ge
             await mcp.call_tool("clone_and_deploy", {"terraform_dir": DEMO_INFRA_DIR})
             await _log(yield_event, "  -> Pre-Warm Successful. Mock production state created.", "success")
         except Exception as e:
-            await _log(yield_event, "  [WARN] Pre-warm apply failed. Proceeding anyway...", "warn")
+            await _log(yield_event, f"  [WARN] Pre-warm apply failed: {str(e)[:200]}. Proceeding with clean state...", "warn")
             
         await _log(yield_event, f"\n[STEP 1] TRANSITION TO PR BRANCH ({pr_branch})")
-        checkout_branch(workspace_dir, pr_branch)
+        checkout_success = checkout_branch(workspace_dir, pr_branch)
+        if not checkout_success:
+            await _log(yield_event, f"  [ERROR] Failed to checkout PR branch '{pr_branch}'. Aborting.", "error")
+            return False
     else:
-        await _log(yield_event, "[PRE-FLIGHT] Resetting demo environment for a clean run...")
-        await reset_terraform_state(yield_event)
-        await reset_main_tf(yield_event)
+        # Determine if we're running against the built-in demo directory
+        builtin_demo_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "demo-infra")
+        is_demo_mode = os.path.normcase(os.path.abspath(DEMO_INFRA_DIR)) == os.path.normcase(os.path.abspath(builtin_demo_dir))
+        
+        if is_demo_mode:
+            await _log(yield_event, "[PRE-FLIGHT] Resetting demo environment for a clean run...")
+            await reset_terraform_state(yield_event)
+            await reset_main_tf(yield_event)
+        else:
+            await _log(yield_event, "[PRE-FLIGHT] Verifying user-supplied infrastructure directory...")
+            if not os.path.isdir(DEMO_INFRA_DIR):
+                await _log(yield_event, f"  [ERROR] Target directory does not exist: {DEMO_INFRA_DIR}", "error")
+                return False
+            tf_files = [f for f in os.listdir(DEMO_INFRA_DIR) if f.endswith('.tf')]
+            if not tf_files:
+                await _log(yield_event, f"  [ERROR] No .tf files found in: {DEMO_INFRA_DIR}", "error")
+                return False
+            await _log(yield_event, f"  [OK] Found {len(tf_files)} Terraform file(s). Proceeding without reset.")
     await _log(yield_event, "")
 
     success = False
@@ -277,6 +296,12 @@ async def main(yield_event=None, target_dir=None, max_retries=None, ai_model="ge
             await _log(yield_event, "|                                                                    |")
             await _log(yield_event, f"+{divider}+\n")
             success = True
+            break
+
+        except CircuitBreakerError as cb_err:
+            await _log(yield_event, f"|  [BLOCKED] Circuit breaker tripped — execution halted.", "error")
+            await _log(yield_event, f"|  {str(cb_err)[:300]}\n|", "error")
+            await _log(yield_event, f"+--- [HALT] Circuit breaker active. Human intervention required.\n", "error")
             break
 
         except Exception as deploy_err:

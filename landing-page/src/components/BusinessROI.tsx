@@ -1,18 +1,18 @@
 export default function BusinessROI() {
   const stats = [
     {
-      id: "mttr",
-      value: "45m → 12s",
-      subtitle: "Mean Time to Recovery (MTTR)",
+      id: "feedback",
+      value: "Minutes",
+      subtitle: "Infrastructure Feedback Loop",
       detail:
-        "Turn manual multi-engineer debugging sessions into an automated pipeline blip.",
+        "Catch deployment failures in a sandbox before they reach production. No cloud credentials required.",
     },
     {
       id: "blast",
-      value: "100%",
+      value: "Sandboxed",
       subtitle: "Blast Radius Containment",
       detail:
-        "Invalid cloud configurations are physically prevented from reaching live AWS environments.",
+        "Invalid cloud configurations are tested against LocalStack before any production deployment is attempted.",
     },
     {
       id: "footprint",

@@ -3,7 +3,7 @@ export default function EngineeringSpecs() {
     {
       icon: "🧠",
       header: "Bring-Your-Own-Model",
-      body: "Native LiteLLM integration supports GPT-4o, Claude 3.5, Gemini 3.7, and Ollama. Enforced by an AST failsafe parser.",
+      body: "Native LiteLLM integration supports GPT-4o, Claude 3.5, Gemini 3.7, and Ollama for AI-assisted Terraform repair.",
       tag: "BYOM",
     },
     {
@@ -14,28 +14,28 @@ export default function EngineeringSpecs() {
     },
     {
       icon: "🛡",
-      header: "Zero-Trust Isolation",
-      body: "Shared-kernel Docker MVP transitioning to Firecracker microVMs. Strict zero network egress to live AWS environments.",
+      header: "LocalStack Sandbox Isolation",
+      body: "Terraform execution is redirected to a LocalStack container with mock credentials. Network egress controls are roadmapped.",
       tag: "SECURITY",
     },
     {
       icon: "🔒",
-      header: "Token Guardrails",
-      body: "Agent rigidly scoped via MCP to parse only .tf files. Physically blocked from scanning state files or large .terraform directories.",
-      tag: "POLICY",
+      header: "Circuit Breaker Safety",
+      body: "Prevents runaway agent retry loops. After 4 consecutive failures, execution is hard-blocked until a human operator intervenes.",
+      tag: "SAFETY",
     },
     {
       icon: "⚡",
-      header: "Latency & Fallbacks",
-      body: "Sub-100ms cold starts via Warm Pools. Intelligent ShadowPatch fallback routing ensures pipeline resiliency during API spikes.",
-      tag: "PERFORMANCE",
+      header: "CI/CD Integration",
+      body: "Drop-in GitHub Actions support. Headless CLI with deterministic exit codes (0 = pass, 1 = fail) for any CI runner.",
+      tag: "CI-CD",
     },
     {
-      icon: "🚨",
-      header: "The Escape Hatch",
-      body: "Mandatory human review gates for destructive operations (terraform destroy). Direct webhook bypass if the interception gateway goes down.",
-      tag: "SAFETY",
-    },
+      icon: "🔍",
+      header: "Security Scanning",
+      body: "Integrated Checkov static analysis with fail-closed enforcement. Missing scanner binary blocks the pipeline, not bypasses it.",
+      tag: "SCANNING",
+    },,
   ];
 
   return (

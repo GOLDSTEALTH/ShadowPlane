@@ -110,14 +110,14 @@ async def background_worker():
             await broadcast(event_dict)
 
         try:
-            await demo_loop.main(
+            result = await demo_loop.main(
                 yield_event=yield_event,
                 github_repo=job["repo"],
                 base_branch="main",
                 pr_branch=job["branch"]
             )
-            success = True
-            await broadcast({"type": "done"})
+            success = result is True  # Explicitly check return value
+            await broadcast({"type": "done" if success else "error"})
         except Exception as e:
             logger.error("Job failed for PR #%s: %s", job["pr_number"], e)
             await broadcast({"type": "log", "level": "error", "content": str(e)})

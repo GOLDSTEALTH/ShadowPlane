@@ -1,0 +1,12 @@
+mcp<2.0.0
+fastmcp
+docker
+fastapi
+uvicorn
+httpx
+websockets
+google-genai
+
+[dev]
+pytest
+pytest-asyncio

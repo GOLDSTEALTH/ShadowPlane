@@ -25,6 +25,10 @@ import os
 import threading
 import time
 
+class CircuitBreakerError(Exception):
+    """Raised when the circuit breaker is tripped and execution is blocked."""
+    pass
+
 logger = logging.getLogger("ShadowPlane-Gateway.CircuitBreaker")
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -142,9 +146,8 @@ class CircuitBreaker:
         key = self._normalize_dir(terraform_dir)
         with self._lock:
             self._failures.pop(key, None)
-            # Also clear tripped state on success — if Terraform succeeded,
-            # the issue is resolved.
-            self._tripped.pop(key, None)
+            # Note: tripped state is NOT cleared on success.
+            # A tripped breaker requires explicit reset() by a human operator.
             logger.info("CircuitBreaker: cleared failures for '%s' on success", terraform_dir)
 
     def reset(self, terraform_dir: str) -> str:

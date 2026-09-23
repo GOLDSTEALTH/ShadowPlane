@@ -21,16 +21,27 @@ class EmulatorConnector(ABC):
     def cleanup_overrides(self, target_dir: str):
         pass
 
+from engine.constants import LOCALSTACK_SERVICES
+
 class LocalStackConnector(EmulatorConnector):
     def get_env_vars(self) -> Dict[str, str]:
-        return {
+        endpoint = os.getenv("AWS_ENDPOINT_URL", "http://127.0.0.1:4566")
+        env = {
             "AWS_ACCESS_KEY_ID": "test",
             "AWS_SECRET_ACCESS_KEY": "test",
             "AWS_DEFAULT_REGION": "us-east-1",
+            "AWS_ENDPOINT_URL": endpoint,
+            "AWS_EC2_METADATA_DISABLED": "true",
         }
+        for svc in ("S3", "DYNAMODB", "SQS", "SNS", "LAMBDA", "IAM", "STS", "EC2"):
+            env[f"AWS_ENDPOINT_URL_{svc}"] = endpoint
+        return env
     
     def setup_overrides(self, target_dir: str):
         endpoint = os.getenv("AWS_ENDPOINT_URL", "http://127.0.0.1:4566")
+        endpoints_block = "\n".join(
+            f'    {svc:<18} = "{endpoint}"' for svc in LOCALSTACK_SERVICES
+        )
         override_hcl = f"""
 provider "aws" {{
   access_key                  = "test"
@@ -41,11 +52,7 @@ provider "aws" {{
   skip_metadata_api_check     = true
   skip_requesting_account_id  = true
   endpoints {{
-    s3       = "{endpoint}"
-    dynamodb = "{endpoint}"
-    iam      = "{endpoint}"
-    sts      = "{endpoint}"
-    ec2      = "{endpoint}"
+{endpoints_block}
   }}
 }}
 """

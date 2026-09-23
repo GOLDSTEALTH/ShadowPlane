@@ -8,7 +8,7 @@ import asyncio
 import socket
 import time
 from mcp.server.fastmcp import FastMCP
-from circuit_breaker import circuit_breaker, SYSTEM_OVERRIDE_MESSAGE
+from circuit_breaker import circuit_breaker, SYSTEM_OVERRIDE_MESSAGE, CircuitBreakerError
 
 # Configure logging to write to stderr so it does not interfere with the stdin/stdout communication channel of MCP
 logging.basicConfig(
@@ -433,15 +433,17 @@ async def clone_and_deploy(terraform_dir: str) -> str:
         status = circuit_breaker.get_status(terraform_dir)
         logger.error(
             "CircuitBreaker BLOCKED clone_and_deploy for '%s' — breaker is tripped "
-            "(failures=%d, max=%d). Returning hard-stop message.",
+            "(failures=%d, max=%d). Raising CircuitBreakerError.",
             terraform_dir,
             status["failure_count"],
             status["max_failures"],
         )
-        return SYSTEM_OVERRIDE_MESSAGE.format(
-            failure_count=status["failure_count"],
-            terraform_dir=terraform_dir,
-            window=status["window_seconds"],
+        raise CircuitBreakerError(
+            SYSTEM_OVERRIDE_MESSAGE.format(
+                failure_count=status["failure_count"],
+                terraform_dir=terraform_dir,
+                window=status["window_seconds"],
+            )
         )
 
     deployment_id = str(uuid.uuid4())
@@ -458,12 +460,13 @@ async def clone_and_deploy(terraform_dir: str) -> str:
     else:
         tripped = circuit_breaker.check_and_record_failure(terraform_dir)
         if tripped:
-            # Return the hard-stop override instead of the Terraform error
             status = circuit_breaker.get_status(terraform_dir)
-            return SYSTEM_OVERRIDE_MESSAGE.format(
-                failure_count=status["failure_count"],
-                terraform_dir=terraform_dir,
-                window=status["window_seconds"],
+            raise CircuitBreakerError(
+                SYSTEM_OVERRIDE_MESSAGE.format(
+                    failure_count=status["failure_count"],
+                    terraform_dir=terraform_dir,
+                    window=status["window_seconds"],
+                )
             )
         # Not yet tripped — return the normal error so the agent can try to fix it
         raise RuntimeError(f"Terraform execution failed: {result['error_log']}")
@@ -500,7 +503,7 @@ async def read_sandbox_logs(deployment_id: str) -> str:
     return record["stdout"]
 
 @mcp.tool()
-async def reset_circuit_breaker(terraform_dir: str) -> str:
+async def reset_circuit_breaker(terraform_dir: str, auth_token: str = "") -> str:
     """Reset the circuit breaker for a Terraform directory after human intervention.
 
     Use this tool after diagnosing and fixing the root cause of repeated Terraform
@@ -508,8 +511,24 @@ async def reset_circuit_breaker(terraform_dir: str) -> str:
 
     Args:
         terraform_dir: Path to the Terraform directory whose circuit breaker should be reset.
+        auth_token: Required authentication token. Must match SHADOWPLANE_RESET_TOKEN env var.
     """
-    logger.info("reset_circuit_breaker tool invoked for: %s", terraform_dir)
+    expected_token = os.environ.get("SHADOWPLANE_RESET_TOKEN", "")
+    if not expected_token:
+        logger.warning("SHADOWPLANE_RESET_TOKEN not configured — circuit breaker reset is disabled.")
+        return (
+            "Circuit breaker reset is disabled. "
+            "Set the SHADOWPLANE_RESET_TOKEN environment variable to enable manual resets."
+        )
+    
+    if not auth_token or auth_token != expected_token:
+        logger.warning("Invalid auth_token provided for reset_circuit_breaker on '%s'", terraform_dir)
+        return (
+            "Authentication failed. Provide a valid auth_token to reset the circuit breaker. "
+            "This token must match the SHADOWPLANE_RESET_TOKEN environment variable."
+        )
+    
+    logger.info("reset_circuit_breaker tool invoked for: %s (authenticated)", terraform_dir)
     result = circuit_breaker.reset(terraform_dir)
     logger.info("reset_circuit_breaker result: %s", result)
     return result

@@ -1,0 +1,4 @@
+[console_scripts]
+shadowplane = cli:main
+shadowplane-engine = main:_cli_entry
+shadowplane-server = server:_cli_entry

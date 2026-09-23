@@ -1,8 +1,22 @@
-mcp<2.0.0
-fastmcp
-docker
-fastapi
-uvicorn
-httpx
-websockets
-google-genai
+# Core MCP server
+mcp[cli]>=1.0.0
+
+# AI engine
+litellm>=1.0.0
+
+# Web server (webhook gateway)
+fastapi>=0.100.0
+uvicorn>=0.20.0
+httpx>=0.24.0
+
+# Google GenAI (enterprise engine)
+google-genai>=1.0.0
+
+# Docker SDK (LocalStack management)
+docker>=6.0.0
+
+# Environment loading
+python-dotenv>=1.0.0
+
+# Websockets (FastAPI WebSocket support)
+websockets>=11.0

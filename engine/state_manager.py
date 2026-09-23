@@ -2,7 +2,11 @@ import json
 import os
 
 class StateSanitizer:
-    SENSITIVE_KEYS = ["password", "secret", "private_key", "token", "access_key"]
+    SENSITIVE_KEYS = [
+        "password", "secret", "private_key", "token", "access_key",
+        "api_key", "connection_string", "auth", "certificate", "jwt",
+        "private_data", "secret_key", "credentials", "signing_key",
+    ]
 
     def __init__(self, target_dir: str):
         self.target_dir = target_dir
@@ -37,8 +41,24 @@ class StateSanitizer:
                 for instance in resource.get("instances", []):
                     if "attributes" in instance:
                         self._sanitize_dict(instance["attributes"])
-                    if "sensitive_attributes" in instance:
-                        instance["sensitive_attributes"] = []
+                    # Use sensitive_attributes metadata to identify and redact sensitive values
+                    if "sensitive_attributes" in instance and "attributes" in instance:
+                        for attr_path in instance.get("sensitive_attributes", []):
+                            # attr_path is a JSON path like [{"type":"get_attr","value":"password"}]
+                            if isinstance(attr_path, list):
+                                for path_element in attr_path:
+                                    if isinstance(path_element, dict) and "value" in path_element:
+                                        key = path_element["value"]
+                                        if key in instance["attributes"]:
+                                            instance["attributes"][key] = "REDACTED_BY_SHADOWPLANE"
+                        
+            # Sanitize top-level outputs
+            for output_name, output_data in state_data.get("outputs", {}).items():
+                if isinstance(output_data, dict):
+                    if output_data.get("sensitive", False):
+                        output_data["value"] = "REDACTED_BY_SHADOWPLANE"
+                    elif any(s in output_name.lower() for s in self.SENSITIVE_KEYS):
+                        output_data["value"] = "REDACTED_BY_SHADOWPLANE"
                         
             # Write sanitized state
             sanitized_path = os.path.join(self.target_dir, "sanitized_terraform.tfstate")

@@ -32,7 +32,7 @@ export default function Home() {
             for Terraform.
           </h1>
           <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-            Intercept broken Terraform configurations, sandbox them in LocalStack, and auto-heal AWS API failures via the autonomous ShadowPatch engine.
+            Intercept broken Terraform configurations, sandbox them in LocalStack, and enforce security policies with fail-closed Change-Risk Intelligence.
           </p>
 
           {/* CTAs */}

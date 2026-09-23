@@ -17,7 +17,7 @@ class ShadowPlaneEngine:
         self.pr_number = pr_number
         self.log = get_logger("ShadowPlaneEngine")
         
-        self.runner = IaCRunner(binary="tofu", connector=LocalStackConnector())
+        self.runner = IaCRunner(binary=os.environ.get("SHADOWPLANE_IAC_BINARY", "terraform"), connector=LocalStackConnector())
         self.security = CheckovValidator()
         self.state_manager = StateSanitizer(target_dir)
         self.notifier = SlackNotifier()
@@ -38,11 +38,13 @@ class ShadowPlaneEngine:
         return text
 
     def run_pipeline(self) -> bool:
+        from engine.pipeline import VerificationPipeline, VerificationReport
+
         self.log.info(f"========== SHADOWPLANE ENTERPRISE ENGINE ==========")
-        self.log.info(f"[1/8] PR Webhook Received: PR #{self.pr_number}")
+        self.log.info(f"[1/5] PR Webhook Received: PR #{self.pr_number}")
         
         # 1. Fetch Sanitized State
-        self.log.info("[2/8] Fetching and Sanitizing State...")
+        self.log.info("[2/5] Fetching and Sanitizing State...")
         has_state = self.state_manager.ingest_and_sanitize()
         if has_state:
             self.log.info("  -> Sanitized tfstate loaded into LocalStack Sandbox.")
@@ -50,97 +52,36 @@ class ShadowPlaneEngine:
             self.log.info("  -> No existing state found. Proceeding with clean sandbox.")
 
         try:
-            # 2. Tofu Init
-            self.log.info("[3/8] Initializing OpenTofu...")
-            init_res = self.runner.init(self.target_dir)
-            if not init_res["success"]:
-                self.log.info(f"Init Failed:\n{init_res['stderr']}")
-                return False
-
-            # 3. Tofu Apply (Catch AWS API Error)
-            self.log.info("[4/8] Running Tofu Apply (Dry-Run / First Attempt)...")
-            apply_res = self.runner.apply(self.target_dir)
+            # 2. Run Unified Pipeline (Option C: Init -> Security Scan -> Change-Risk Plan -> Deploy)
+            self.log.info("[3/5] Starting Unified Verification Pipeline...")
             
-            original_hcl = ""
-            patched_hcl = ""
-            main_tf_path = os.path.join(self.target_dir, "main.tf")
+            pipeline = VerificationPipeline(
+                terraform_dir=self.target_dir,
+                runner=self.runner,
+                security=self.security,
+                commit_sha=None,  # Placeholder for actual git SHA parsing
+            )
+            report = pipeline.run()
             
-            if os.path.exists(main_tf_path):
-                with open(main_tf_path, "r") as f:
-                    original_hcl = f.read()
+            # Log the report
+            self.log.info(f"[4/5] Verification Complete. Evidence Hash: {report.evidence_hash}")
+            self.log.info(f"  -> Change Risk Score: {report.change_risk.risk_score}")
+            if report.change_risk.high_risk_deletions:
+                self.log.warning(f"  -> WARNING: High-risk deletions detected: {report.change_risk.high_risk_deletions}")
+            if report.change_risk.iam_broadening:
+                self.log.warning(f"  -> WARNING: IAM policy broadening detected: {report.change_risk.iam_broadening}")
             
-            if apply_res["success"]:
-                self.log.info("  -> Apply successful on first try. No AI repair needed.")
-                patched_hcl = original_hcl
+            # Notify
+            self.log.info("[5/5] Dispatching Slack ChatOps Notification...")
+            
+            # Send notification using the pipeline results
+            if report.success:
+                # Mock diff since we removed the original vs patched text blocks for now
+                self.notifier.send_verification_success(self.pr_number, "Pipeline Execution Passed", f"Evidence Hash: {report.evidence_hash}\nRisk Score: {report.change_risk.risk_score}")
             else:
-                self.log.info(f"  -> Caught AWS API / Provisioning Error (Code {apply_res['exit_code']}).")
-                
-                # 4. ShadowPatch Patch (with Checkov retry loop)
-                self.log.info("[5/8] Engaging ShadowPatch AI & Security Guardrails...")
-                
-                max_ai_retries = 3
-                current_hcl = original_hcl
-                patched = False
-                error_context = apply_res['stderr']
-                
-                for attempt in range(1, max_ai_retries + 1):
-                    self.log.info(f"  -> [AI Attempt {attempt}] Prompting ShadowPatch Engine...")
-                    
-                    try:
-                        import asyncio
-                        from engine.ai import repair_terraform_code
-                        
-                        # Note: Checkov context requires a slightly different prompt but we can pass it as error_text
-                        patched_hcl = asyncio.run(repair_terraform_code(
-                            model=self.model,
-                            error_text=error_context,
-                            current_hcl=current_hcl,
-                            base_url=None
-                        ))
-                        
-                        if not patched_hcl:
-                            self.log.info("  -> AI returned empty response. Aborting.")
-                            break
-                            
-                        # Write patch
-                        with open(main_tf_path, "w") as f:
-                            f.write(patched_hcl)
-                            
-                        # 5. Checkov Security Scan
-                        self.log.info("  -> Running Checkov Security Scan on ShadowPatch Output...")
-                        sec_result = self.security.scan(self.target_dir)
-                        
-                        if sec_result["passed"]:
-                            self.log.info("  -> Checkov Validation PASSED. Shift-Left Security enforced.")
-                            patched = True
-                            break
-                        else:
-                            self.log.info(f"  -> Checkov Validation FAILED. Issues found: {len(sec_result.get('failed_checks', []))}")
-                            error_context = "The previous patch failed Checkov security validation:\n" + str(sec_result["failed_checks"]) + "\nFix the code to be compliant."
-                            current_hcl = patched_hcl
-                            
-                    except Exception as e:
-                        self.log.info(f"  -> ShadowPatch Core Error: {e}")
-                        break
-
-                if not patched:
-                    self.log.info("  -> Failed to generate a secure and valid patch.")
-                    return False
-                    
-                # 6. Tofu Apply in LocalStack (Verification)
-                self.log.info("[6/8] Verifying AI Patch with LocalStack OpenTofu Apply...")
-                verify_res = self.runner.apply(self.target_dir)
-                if not verify_res["success"]:
-                    self.log.info(f"  -> Verification Failed!\n{verify_res['stderr']}")
-                    return False
-                self.log.info("  -> Verification PASSED. Blast Radius Contained.")
-
-            # 7. Slack ChatOps Notification
-            self.log.info("[7/8] Dispatching Slack ChatOps Notification...")
-            self.notifier.send_verification_success(self.pr_number, original_hcl, patched_hcl)
+                self.log.info("Pipeline Failed. Not dispatching success webhook.")
             
-            self.log.info("[8/8] Pipeline Complete. Success.")
-            return True
+            return report.success
             
         finally:
             self.state_manager.restore_backup()

@@ -74,13 +74,18 @@ class TestCircuitBreakerBasic(unittest.TestCase):
         status = self.cb.get_status("/infra")
         self.assertEqual(status["failure_count"], 0)
 
-    def test_success_clears_tripped_state(self):
-        """If somehow a success occurs after tripping, it clears the trip."""
+    def test_success_does_not_clear_tripped_state(self):
+        """A tripped breaker stays tripped even after a success — requires explicit reset()."""
         for _ in range(4):
             self.cb.check_and_record_failure("/infra")
         self.assertTrue(self.cb.is_tripped("/infra"))
 
+        # record_success clears the failure counter but NOT the tripped latch
         self.cb.record_success("/infra")
+        self.assertTrue(self.cb.is_tripped("/infra"))
+
+        # Only explicit reset() clears the tripped state
+        self.cb.reset("/infra")
         self.assertFalse(self.cb.is_tripped("/infra"))
 
     def test_manual_reset(self):

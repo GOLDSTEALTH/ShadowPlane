@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "shadowplane"
 dynamic = ["version"]
-description = "ShadowPlane — Autonomous Infrastructure Verification Pipeline. Intercepts Terraform deployments, runs them in a LocalStack sandbox, self-heals errors, and gates the CI/CD pipeline."
+description = "ShadowPlane — IaC Verification Gateway. Intercepts Terraform deployments, runs them in a LocalStack sandbox with fail-closed security scanning and Change-Risk Intelligence."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}

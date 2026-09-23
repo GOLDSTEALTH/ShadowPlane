@@ -5,19 +5,24 @@ class SlackNotifier:
     def __init__(self, webhook_url: str = None):
         self.webhook_url = webhook_url or os.environ.get("SLACK_WEBHOOK_URL", "")
 
-    def _truncate_diff(self, original: str, patched: str, max_lines: int = 10) -> str:
-        orig_lines = original.splitlines()
-        patch_lines = patched.splitlines()
+    def _truncate_diff(self, original: str, patched: str, max_lines: int = 30) -> str:
+        import difflib
+        orig_lines = original.splitlines(keepends=True)
+        patch_lines = patched.splitlines(keepends=True)
         
-        diff_str = "--- Original\n+++ Patched\n"
-        for i in range(min(len(orig_lines), max_lines)):
-            if i < len(patch_lines) and orig_lines[i] != patch_lines[i]:
-                diff_str += f"- {orig_lines[i]}\n+ {patch_lines[i]}\n"
+        diff = list(difflib.unified_diff(
+            orig_lines, patch_lines,
+            fromfile="Original", tofile="Patched",
+            lineterm=""
+        ))
         
-        if len(orig_lines) > max_lines or len(patch_lines) > max_lines:
-            diff_str += "\n... (diff truncated) ..."
-            
-        return diff_str or "No visible differences in first 10 lines."
+        if not diff:
+            return "No differences detected."
+        
+        if len(diff) > max_lines:
+            diff = diff[:max_lines] + [f"\n... ({len(diff) - max_lines} more lines truncated) ..."]
+        
+        return "".join(diff)
 
     def send_verification_success(self, pr_number: str, original_hcl: str, patched_hcl: str) -> bool:
         if not self.webhook_url:
@@ -39,7 +44,7 @@ class SlackNotifier:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "*AI Auto-Repair applied and verified against LocalStack/Checkov.*\n\n*HCL Diff (Truncated):*"
+                    "text": "*Verification Complete against LocalStack/Checkov.*\n\n*Results (Truncated):*"
                 }
             },
             {
@@ -50,27 +55,11 @@ class SlackNotifier:
                 }
             },
             {
-                "type": "actions",
+                "type": "context",
                 "elements": [
                     {
-                        "type": "button",
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Approve & Merge",
-                            "emoji": True
-                        },
-                        "style": "primary",
-                        "value": f"approve_pr_{pr_number}"
-                    },
-                    {
-                        "type": "button",
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Reject",
-                            "emoji": True
-                        },
-                        "style": "danger",
-                        "value": f"reject_pr_{pr_number}"
+                        "type": "mrkdwn",
+                        "text": "🔗 Review the full results in the Pull Request. | ShadowPlane Autonomous Verification"
                     }
                 ]
             }

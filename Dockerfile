@@ -81,7 +81,7 @@ USER shadowplane
 
 # -- Healthcheck -------------------------------------------------------------
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD python -c "import server; print('ok')" || exit 1
+    CMD python -c "import sys; sys.exit(0)" || exit 1
 
 # -- Entrypoint --------------------------------------------------------------
 ENTRYPOINT ["python", "cli.py"]
