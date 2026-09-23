@@ -7,86 +7,71 @@ import { motion, useScroll, useTransform, useInView } from "framer-motion";
 const nodes = [
   {
     side: "right" as const,
-    tag: "STATE",
-    title: "Pre-Warm Sandbox",
-    body: "Clones your 'main' branch and applies it locally. Then checks out your Pull Request branch to test the exact infrastructure transition safely.",
+    tag: "SECURITY",
+    title: "Fail-Closed Scanning",
+    body: "Enforces strict Checkov static analysis before any plan executes. Missing scanner binaries block the pipeline to prevent bypasses.",
     visual: (
-      <div className="font-mono text-xs leading-6 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre">
-        <span className="text-zinc-600">$</span>{" "}
-        <span className="text-cyan-400">git checkout</span>{" "}
-        <span className="text-emerald-400">main</span>{" "}
-        <span className="text-zinc-500">&&</span>{" "}
-        <span className="text-cyan-400">terraform apply</span>
-        <br />
-        <span className="text-zinc-600">$</span>{" "}
-        <span className="text-cyan-400">git checkout</span>{" "}
-        <span className="text-yellow-400">feature/PR</span>{" "}
-        <span className="text-zinc-500">&&</span>{" "}
-        <span className="text-cyan-400">terraform apply</span>
+      <div className="font-mono text-[11px] leading-5 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre">
+        <div className="text-zinc-600 mb-2">
+          $ <span className="text-cyan-400">checkov -f main.tf</span>
+        </div>
+        <div className="text-emerald-400 flex items-center gap-2">
+          <span>✓ Passed checks: 14</span>
+        </div>
+        <div className="text-red-400 flex items-center gap-2">
+          <span>✗ Failed checks: 0</span>
+        </div>
       </div>
     ),
   },
   {
     side: "left" as const,
+    tag: "INTELLIGENCE",
+    title: "Change-Risk Analysis",
+    body: "Parses 'terraform plan -json' to proactively flag destructive stateful resource drops (RDS/S3) and IAM permission broadening.",
+    visual: (
+      <div className="font-mono text-[11px] leading-5 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre">
+        <div className="text-red-400 font-semibold mb-1">
+          [CRITICAL] High-Risk Deletion Detected
+        </div>
+        <div className="text-zinc-500 mb-2 border-l-2 border-red-500/30 pl-3">
+          aws_db_instance.primary is marked for destroy.
+        </div>
+        <div className="text-cyan-400 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+          Execution Blocked. Human verification required.
+        </div>
+      </div>
+    ),
+  },
+  {
+    side: "right" as const,
     tag: "ISOLATION",
-    title: "LocalStack Isolation",
-    body: "Intercepts Terraform plans and physically isolates execution within a LocalStack sandbox to prevent live AWS mutation.",
+    title: "LocalStack Execution",
+    body: "If the plan is safe, it is physically isolated and applied within an ephemeral LocalStack Docker container to prevent live AWS mutation.",
     visual: (
       <div className="font-mono text-xs leading-6 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre">
         <span className="text-zinc-600">$</span>{" "}
         <span className="text-cyan-400">terraform apply</span>{" "}
         <span className="text-zinc-500">-var="</span><span className="text-emerald-400">env=sandbox</span><span className="text-zinc-500">"</span>
-      </div>
-    ),
-  },
-  {
-    side: "right" as const,
-    tag: "GUARDRAILS",
-    title: "Token Guardrails",
-    body: "Agent rigidly scoped via FastMCP to parse only .tf files. Physically blocked from scanning massive .terraform directories.",
-    visual: (
-      <div className="font-mono text-xs leading-6 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto">
-        <div className="text-zinc-600">├── <span className="opacity-50">.terraform/</span></div>
-        <div className="text-zinc-600">├── <span className="opacity-50">.terraform.lock.hcl</span></div>
-        <div className="text-zinc-200 font-semibold flex items-center gap-2">
-          <span>├── main.tf</span>
-          <span className="text-[10px] text-cyan-500 border border-cyan-900 bg-cyan-950/30 px-1.5 py-0 rounded">ALLOWED</span>
-        </div>
-        <div className="text-zinc-600">└── <span className="opacity-50">terraform.tfstate</span></div>
+        <br />
+        <span className="text-zinc-400 text-[10px]">
+          [sandbox] apply complete! Resources: 3 added, 0 changed.
+        </span>
       </div>
     ),
   },
   {
     side: "left" as const,
-    tag: "AUTO-HEAL",
-    title: "Autonomous HCL Healing",
-    body: "Parses LocalStack API validation exceptions and routes the broken syntax to the ShadowPatch engine for deterministic repair.",
-    visual: (
-      <div className="font-mono text-[11px] leading-5 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre">
-        <div className="text-red-400 font-semibold mb-1">
-          AWS API Exception: InvalidBucketName
-        </div>
-        <div className="text-zinc-500 mb-2 border-l-2 border-red-500/30 pl-3">
-          The specified bucket is not valid.
-        </div>
-        <div className="text-cyan-400 flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-          [shadowplane] ShadowPatch Applied
-        </div>
-      </div>
-    ),
-  },
-  {
-    side: "right" as const,
-    tag: "ESCAPE HATCH",
-    title: "The Escape Hatch",
-    body: "Mandatory human review gates for destructive operations (terraform destroy). Direct webhook bypass if the interception gateway experiences downtime.",
+    tag: "CIRCUIT BREAKER",
+    title: "Runaway AI Prevention",
+    body: "A robust circuit breaker trips after 4 consecutive failures, physically blocking AI agents from entering infinite retry loops.",
     visual: (
       <div className="font-mono text-xs leading-6 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre text-zinc-300">
         {"{"}
-        {"\n  "}<span className="text-zinc-500">"gatekeeper_mode"</span>: <span className="text-emerald-400">"active"</span>,
-        {"\n  "}<span className="text-zinc-500">"require_human_approval"</span>: <span className="text-cyan-400">true</span>,
-        {"\n  "}<span className="text-zinc-500">"fail_open"</span>: <span className="text-cyan-400">true</span>
+        {"\n  "}<span className="text-zinc-500">"breaker_status"</span>: <span className="text-red-400">"TRIPPED"</span>,
+        {"\n  "}<span className="text-zinc-500">"failure_count"</span>: <span className="text-cyan-400">4</span>,
+        {"\n  "}<span className="text-zinc-500">"system_override"</span>: <span className="text-cyan-400">true</span>
         {"\n"}{"}"}
       </div>
     ),
