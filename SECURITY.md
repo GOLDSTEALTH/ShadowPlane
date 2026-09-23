@@ -6,8 +6,8 @@ We currently support the latest major release of ShadowPlane for security update
 
 | Version | Supported          |
 | ------- | ------------------ |
-| >= 0.1.x| :white_check_mark: |
-| < 1.0.0 | :x:                |
+| >= 2.0.x| :white_check_mark: |
+| < 2.0.0 | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -15,7 +15,7 @@ We take the security of ShadowPlane seriously. If you believe you have found a s
 
 **DO NOT create a public GitHub issue for security vulnerabilities.**
 
-Instead, please email **syedaamairshareef@gmail.com* with:
+Instead, please email **syedaamairshareef@gmail.com** with:
 1. A description of the vulnerability.
 2. Steps to reproduce the issue.
 3. The impact of the vulnerability.
