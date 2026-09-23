@@ -2,21 +2,21 @@ export default function BusinessROI() {
   const stats = [
     {
       id: "feedback",
-      value: "Minutes",
+      value: "< 5m",
       subtitle: "Infrastructure Feedback Loop",
       detail:
         "Catch deployment failures in a sandbox before they reach production. No cloud credentials required.",
     },
     {
       id: "blast",
-      value: "Sandboxed",
-      subtitle: "Blast Radius Containment",
+      value: "100%",
+      subtitle: "Sandbox Containment",
       detail:
         "Invalid cloud configurations are tested against LocalStack before any production deployment is attempted.",
     },
     {
       id: "footprint",
-      value: "Zero",
+      value: "0",
       subtitle: "Production Agent Footprint",
       detail:
         "Operates entirely via webhooks and localized Docker/LocalStack sandboxes.",
