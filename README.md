@@ -5,28 +5,52 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 
-ShadowPlane is an autonomous CI/CD gatekeeper designed for Agentic DevOps.
+ShadowPlane is a deterministic IaC Containment Firewall and Verification Gateway designed for Agentic DevOps.
 
 ## About ShadowPlane
 
-As AI coding agents gain the ability to generate and deploy infrastructure (Terraform, AWS CDK, etc.), the risk of an AI hallucinating an invalid configuration and bringing down production skyrockets. 
+As AI coding agents (Claude Code, Cursor, Devin, GitHub Copilot Workspace) gain the ability to generate and modify infrastructure as code, the risk of an agent hallucinating invalid configurations, introducing security backdoors, or deleting stateful production resources skyrockets.
 
-ShadowPlane solves this by providing a deterministic, secure sandbox that intercepts these deployments. Before any infrastructure code reaches your real cloud environment, ShadowPlane provisions it inside an isolated **LocalStack** container. 
-
-Instead of dangerous automated AI-repairs, ShadowPlane acts as an **IaC Verification Gateway**. It parses Terraform output and flags **Change-Risk Intelligence** (such as destructive stateful resource drops and IAM permission broadening) so a human can securely verify agent-authored configurations.
-
-It strictly enforces system exit codes (`0` for Pass, `1` for Fail), ensuring your CI/CD runner knows exactly when it is safe to proceed to production.
+ShadowPlane acts as an **IaC Verification Gateway & Execution Firewall**:
+1. **Isolated Docker Sandboxing**: Executes Terraform inside disposable, rootless Docker sandbox containers with host credentials stripped and network egress locked to LocalStack, neutralizing `local-exec` escape risks.
+2. **Fail-Closed Security**: Evaluates configurations against Checkov static analysis policies. Missing tools or security violations fail closed.
+3. **Change-Risk Intelligence**: Inspects plan JSON to proactively block destructive stateful resource drops (e.g. `aws_s3_bucket`, `aws_db_instance`, `aws_kms_key`) and alert on IAM privilege broadening.
+4. **Cryptographic Attestation**: Produces a tamper-evident SHA-256 evidence hash and markdown attestation pack for PR reviews and CI merge gates.
+5. **Circuit Breaker Safety**: Enforces sliding-window failure counters to physically halt runaway agent retry loops.
 
 ## The Architecture
 
-1. **Intercept & Sandbox**: The CLI targets a directory and triggers an ephemeral LocalStack sandbox using Docker.
-2. **Execute**: It runs `terraform init` and `checkov` security scanning.
-3. **Change-Risk Intelligence**: It runs `terraform plan -json` to proactively detect high-risk changes (database deletions, IAM broadening).
-4. **Deploy & Hash**: It applies the sandbox deployment and generates a tamper-evident evidence hash.
-5. **Circuit Breaker**: A built-in safety net prevents runaway AI retry loops.
-6. **Gatekeep**: 
-   - **`sys.exit(0)`**: Blast radius contained. Risk verified as safe.
-   - **`sys.exit(1)`**: Critical risk detected or max failures exhausted. The CI pipeline is hard-blocked.
+```
+PR / Agent HCL ──> [ShadowPlane Gateway]
+                         │
+                         ▼
+        ┌───────────────────────────────────┐
+        │ Hardened Docker Sandbox Container │
+        │  • Stripped host AWS credentials  │
+        │  • Terraform / OpenTofu Runner    │
+        │  • Network locked to LocalStack   │
+        └─────────────────┬─────────────────┘
+                          │
+                          ▼
+        ┌───────────────────────────────────┐
+        │  Change-Risk & Policy Engine      │
+        │  • Fail-closed Checkov scanner    │
+        │  • Stateful deletion detector     │
+        │  • IAM privilege creep analyzer   │
+        └─────────────────┬─────────────────┘
+                          │
+                          ▼
+       [Cryptographic Attestation & Evidence Pack]
+        (SHA-256 Hash • PR Comments • CI Exit Codes)
+```
+
+1. **Contain & Sandbox**: Mounts the target directory into an ephemeral Docker container with mock credentials (`AWS_ACCESS_KEY_ID=test`).
+2. **Init & Security Scan**: Executes `terraform init` and fail-closed Checkov static analysis.
+3. **Change-Risk Analysis**: Analyzes `terraform plan -json` to flag destructive deletions and IAM broadening before apply.
+4. **Deploy & Attest**: Deploys to LocalStack, computes an immutable SHA-256 evidence hash, and renders an Attestation Pack.
+5. **Enforce Gate**:
+   - **`sys.exit(0)`**: Verification PASSED. Risk verified safe; attestation approved.
+   - **`sys.exit(1)`**: Verification FAILED or BLOCKED. Critical risk detected or breaker tripped; merge pipeline blocked.
 
 ## Install
 
@@ -191,6 +215,6 @@ Use the included Makefile for local development:
 # Install in editable mode with dev dependencies
 pip install -e ".[dev]"
 
-# Run circuit breaker tests
-python -m unittest test_circuit_breaker -v
+# Run full unit test suite (36 tests)
+python -m unittest discover -s . -p "test_*.py" -v
 ```

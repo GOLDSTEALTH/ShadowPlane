@@ -1,27 +1,27 @@
 export default function EngineeringSpecs() {
   const specs = [
     {
-      icon: "🧠",
-      header: "Bring-Your-Own-Model",
-      body: "Native LiteLLM integration supports GPT-4o, Claude 3.5, Gemini 3.7, and Ollama for AI-assisted Terraform repair.",
-      tag: "BYOM",
-    },
-    {
-      icon: "🧊",
-      header: "Two-Stage Pre-Warm Sandbox",
-      body: "Safely simulates production state updates. Clones 'main' to build a mock environment, then applies your PR branch on top.",
-      tag: "SAFE-STATE",
-    },
-    {
       icon: "🛡",
-      header: "LocalStack Sandbox Isolation",
-      body: "Terraform execution is redirected to a LocalStack container with mock credentials. Network egress controls are roadmapped.",
-      tag: "SECURITY",
+      header: "Docker Container Sandboxing",
+      body: "Terraform runs in an ephemeral, rootless Docker sandbox container with host credentials stripped and network egress restricted to LocalStack.",
+      tag: "CONTAINMENT",
+    },
+    {
+      icon: "🔍",
+      header: "Change-Risk Intelligence",
+      body: "Parses plan JSON to detect destructive stateful replacements (RDS, S3, KMS) and flags IAM privilege creep before apply.",
+      tag: "CHANGE-RISK",
+    },
+    {
+      icon: "📜",
+      header: "Cryptographic Attestation",
+      body: "Generates tamper-evident SHA-256 evidence hashes and Markdown attestation packs for PR compliance and CI merge gates.",
+      tag: "ATTESTATION",
     },
     {
       icon: "🔒",
       header: "Circuit Breaker Safety",
-      body: "Prevents runaway agent retry loops. After 4 consecutive failures, execution is hard-blocked until a human operator intervenes.",
+      body: "Prevents runaway agent retry loops. After 4 consecutive failures, execution is hard-blocked until an authorized human resets it.",
       tag: "SAFETY",
     },
     {
@@ -31,9 +31,9 @@ export default function EngineeringSpecs() {
       tag: "CI-CD",
     },
     {
-      icon: "🔍",
-      header: "Security Scanning",
-      body: "Integrated Checkov static analysis with fail-closed enforcement. Missing scanner binary blocks the pipeline, not bypasses it.",
+      icon: "🚨",
+      header: "Fail-Closed Scanning",
+      body: "Integrated Checkov static analysis with fail-closed enforcement. Missing scanner binaries block the pipeline, never bypass it.",
       tag: "SCANNING",
     },
   ];

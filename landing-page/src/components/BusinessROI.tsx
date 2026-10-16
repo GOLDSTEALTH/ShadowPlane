@@ -2,24 +2,24 @@ export default function BusinessROI() {
   const stats = [
     {
       id: "feedback",
-      value: "< 5m",
-      subtitle: "Infrastructure Feedback Loop",
+      value: "Seconds",
+      subtitle: "Deterministic Verification",
       detail:
-        "Catch deployment failures in a sandbox before they reach production. No cloud credentials required.",
+        "Fail-closed Checkov scanning and plan-risk detection catch critical configuration errors in seconds before cloud mutation.",
     },
     {
       id: "blast",
-      value: "100%",
-      subtitle: "Sandbox Containment",
+      value: "Isolated",
+      subtitle: "Docker Container Boundary",
       detail:
-        "Invalid cloud configurations are tested against LocalStack before any production deployment is attempted.",
+        "Terraform executes inside an ephemeral container with host credentials stripped and network restricted exclusively to LocalStack.",
     },
     {
-      id: "footprint",
-      value: "0",
-      subtitle: "Production Agent Footprint",
+      id: "evidence",
+      value: "SHA-256",
+      subtitle: "Cryptographic Attestation",
       detail:
-        "Operates entirely via webhooks and localized Docker/LocalStack sandboxes.",
+        "Every verification produces an immutable, tamper-evident evidence pack for PR comments and CI merge gates.",
     },
   ];
 

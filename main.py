@@ -17,7 +17,16 @@ class ShadowPlaneEngine:
         self.pr_number = pr_number
         self.log = get_logger("ShadowPlaneEngine")
         
-        self.runner = IaCRunner(binary=os.environ.get("SHADOWPLANE_IAC_BINARY", "terraform"), connector=LocalStackConnector())
+        from engine.docker_runner import DockerIaCRunner
+        use_docker = os.environ.get("SHADOWPLANE_USE_DOCKER", "1").lower() in ("1", "true")
+        docker_runner = DockerIaCRunner(connector=LocalStackConnector())
+        if use_docker and docker_runner.is_available:
+            self.runner = docker_runner
+            self.log.info("Initialized Hardened DockerIaCRunner for isolated container execution.")
+        else:
+            self.runner = IaCRunner(binary=os.environ.get("SHADOWPLANE_IAC_BINARY", "terraform"), connector=LocalStackConnector())
+            self.log.info("Initialized host-level IaCRunner.")
+
         self.security = CheckovValidator()
         self.state_manager = StateSanitizer(target_dir)
         self.notifier = SlackNotifier()
@@ -39,8 +48,9 @@ class ShadowPlaneEngine:
 
     def run_pipeline(self) -> bool:
         from engine.pipeline import VerificationPipeline, VerificationReport
+        from engine.attestation import generate_markdown_attestation
 
-        self.log.info(f"========== SHADOWPLANE ENTERPRISE ENGINE ==========")
+        self.log.info(f"========== SHADOWPLANE ENTERPRISE GATEWAY ==========")
         self.log.info(f"[1/5] PR Webhook Received: PR #{self.pr_number}")
         
         # 1. Fetch Sanitized State
@@ -52,14 +62,24 @@ class ShadowPlaneEngine:
             self.log.info("  -> No existing state found. Proceeding with clean sandbox.")
 
         try:
-            # 2. Run Unified Pipeline (Option C: Init -> Security Scan -> Change-Risk Plan -> Deploy)
+            # 2. Extract commit SHA if available
+            commit_sha = None
+            try:
+                import subprocess
+                proc = subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.target_dir, capture_output=True, text=True, timeout=5)
+                if proc.returncode == 0 and proc.stdout.strip():
+                    commit_sha = proc.stdout.strip()[:12]
+            except Exception:
+                pass
+
+            # 3. Run Unified Pipeline (Option C: Init -> Security Scan -> Change-Risk Plan -> Deploy)
             self.log.info("[3/5] Starting Unified Verification Pipeline...")
             
             pipeline = VerificationPipeline(
                 terraform_dir=self.target_dir,
                 runner=self.runner,
                 security=self.security,
-                commit_sha=None,  # Placeholder for actual git SHA parsing
+                commit_sha=commit_sha,
             )
             report = pipeline.run()
             
@@ -72,14 +92,14 @@ class ShadowPlaneEngine:
                 self.log.warning(f"  -> WARNING: IAM policy broadening detected: {report.change_risk.iam_broadening}")
             
             # Notify
-            self.log.info("[5/5] Dispatching Slack ChatOps Notification...")
+            self.log.info("[5/5] Generating Verification Attestation...")
+            attestation_md = generate_markdown_attestation(report)
             
             # Send notification using the pipeline results
             if report.success:
-                # Mock diff since we removed the original vs patched text blocks for now
-                self.notifier.send_verification_success(self.pr_number, "Pipeline Execution Passed", f"Evidence Hash: {report.evidence_hash}\nRisk Score: {report.change_risk.risk_score}")
+                self.notifier.send_verification_success(self.pr_number, "ShadowPlane Verification Attestation", attestation_md)
             else:
-                self.log.info("Pipeline Failed. Not dispatching success webhook.")
+                self.log.warning("Pipeline Failed or Blocked. Attestation summary:\n%s", attestation_md)
             
             return report.success
             

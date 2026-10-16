@@ -46,33 +46,39 @@ const nodes = [
   },
   {
     side: "right" as const,
-    tag: "ISOLATION",
-    title: "LocalStack Execution",
-    body: "If the plan is safe, it is physically isolated and applied within an ephemeral LocalStack Docker container to prevent live AWS mutation.",
+    tag: "CONTAINMENT",
+    title: "Isolated Container Sandbox",
+    body: "Terraform executes inside an ephemeral Docker container with stripped host credentials, blocking malicious local-exec escapes and restricting network egress exclusively to LocalStack.",
     visual: (
-      <div className="font-mono text-xs leading-6 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre">
-        <span className="text-zinc-600">$</span>{" "}
-        <span className="text-cyan-400">terraform apply</span>{" "}
-        <span className="text-zinc-500">-var="</span><span className="text-emerald-400">env=sandbox</span><span className="text-zinc-500">"</span>
-        <br />
-        <span className="text-zinc-400 text-[10px]">
-          [sandbox] apply complete! Resources: 3 added, 0 changed.
-        </span>
+      <div className="font-mono text-[11px] leading-5 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre">
+        <div className="text-cyan-400 font-semibold mb-1">
+          [CONTAINER] hashicorp/terraform:1.7
+        </div>
+        <div className="text-zinc-500 mb-1">
+          Mount: /workspace (rw) | Host Creds: Stripped
+        </div>
+        <div className="text-emerald-400 flex items-center gap-2">
+          <span>✓ LocalStack sandbox apply complete: 3 added.</span>
+        </div>
       </div>
     ),
   },
   {
     side: "left" as const,
-    tag: "CIRCUIT BREAKER",
-    title: "Runaway AI Prevention",
-    body: "A robust circuit breaker trips after 4 consecutive failures, physically blocking AI agents from entering infinite retry loops.",
+    tag: "ATTESTATION",
+    title: "Cryptographic Evidence Pack",
+    body: "Every run generates a signed SHA-256 evidence hash and markdown attestation card, enforcing hard-stop circuit breakers if repeated failures occur.",
     visual: (
-      <div className="font-mono text-xs leading-6 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre text-zinc-300">
-        {"{"}
-        {"\n  "}<span className="text-zinc-500">"breaker_status"</span>: <span className="text-red-400">"TRIPPED"</span>,
-        {"\n  "}<span className="text-zinc-500">"failure_count"</span>: <span className="text-cyan-400">4</span>,
-        {"\n  "}<span className="text-zinc-500">"system_override"</span>: <span className="text-cyan-400">true</span>
-        {"\n"}{"}"}
+      <div className="font-mono text-[11px] leading-5 bg-zinc-950 border border-zinc-800 p-4 mt-4 rounded-lg overflow-x-auto whitespace-pre text-zinc-300">
+        <div className="text-emerald-400 font-semibold mb-1">
+          🛡️ Attestation: PASSED
+        </div>
+        <div className="text-zinc-400 mb-1">
+          Hash: <span className="text-cyan-400">3515fb25...552c78</span>
+        </div>
+        <div className="text-zinc-500">
+          Risk Score: <span className="text-emerald-400">LOW</span> | Breaker: <span className="text-emerald-400">ARMED</span>
+        </div>
       </div>
     ),
   },

@@ -4,7 +4,17 @@
 >
 > **Codebase**: `e:\ShadowPlane` (or wherever the repo is cloned)
 > **Language**: Python 3.10+, TypeScript/React (landing page)
-> **Phase 0 Status**: ✅ Complete (destructive behavior fixed, false greens eliminated, security scanning hardened)
+> **Current Status (October 2026 / v2.1.0+)**:
+> - ✅ **Phase 0**: Complete (destructive behavior fixed, false greens eliminated, fail-closed Checkov security)
+> - ✅ **Work Package 1 (CLI Args)**: Complete (`cli.py` pass-through fixed)
+> - ✅ **Work Package 2 (Landing Page Claims)**: Complete (claims aligned across `EngineeringSpecs.tsx`, `BusinessROI.tsx`, `ScrollPipeline.tsx`, `FAQ.tsx`)
+> - ✅ **Work Package 3 (Unified Verification Pipeline)**: Complete (`engine/pipeline.py` created with `VerificationPipeline`, `VerificationReport`, and `ChangeRiskIntelligence`; `test_pipeline.py` added)
+> - ✅ **Work Package 4 (MCP Auth Gate)**: Complete (`reset_circuit_breaker` requires `SHADOWPLANE_RESET_TOKEN`)
+> - ✅ **Work Package 5 (Git Error Handling)**: Complete (`checkout_branch` return value checked, pre-warm error logged)
+> - ✅ **Work Package 6 (Sandbox Isolation)**: Complete (`engine/constants.py` 29 services; `engine/docker_runner.py` isolated container runner; `test_docker_runner.py` added)
+> - ✅ **Work Package 7 (Slack Notification Fixes)**: Complete (interactive buttons removed, `difflib.unified_diff` integrated)
+> - ✅ **Attestation Pack**: Complete (`engine/attestation.py` generating markdown and JSON evidence packs; `test_attestation.py` added)
+> - ✅ **Full Unit Test Suite**: 36 unit tests passing cleanly.
 
 ---
 

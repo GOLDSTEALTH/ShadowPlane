@@ -72,12 +72,23 @@ class VerificationReport:
 
     def compute_evidence_hash(self) -> str:
         """SHA-256 of the report contents for tamper evidence."""
-        data = json.dumps(asdict(self), sort_keys=True, default=str)
+        d = asdict(self)
+        d["evidence_hash"] = ""
+        data = json.dumps(d, sort_keys=True, default=str)
         self.evidence_hash = hashlib.sha256(data.encode()).hexdigest()
         return self.evidence_hash
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        d = asdict(self)
+        def _serialize(obj):
+            if isinstance(obj, dict):
+                return {k: _serialize(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [_serialize(x) for x in obj]
+            elif isinstance(obj, Enum):
+                return obj.value
+            return obj
+        return _serialize(d)
 
 
 class VerificationPipeline:

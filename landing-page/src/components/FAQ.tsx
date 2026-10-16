@@ -6,19 +6,23 @@ import { motion, AnimatePresence } from "framer-motion";
 const faqs = [
   {
     question: "Does ShadowPlane download my production state files?",
-    answer: "No. Downloading production terraform.tfstate files exposes secrets (like DB passwords) to the AI. Instead, ShadowPlane uses a 'Two-Stage Pre-Warm' strategy. It clones your main branch into LocalStack to build a mock state, then checks out your PR branch to test the transition. Your real state never leaves your VPC.",
+    answer: "No. Downloading production terraform.tfstate files exposes secrets (like DB passwords). Instead, ShadowPlane uses state sanitization to redact sensitive attributes and outputs, and can pre-warm state from your base branch directly into LocalStack. Your production credentials and real secrets never leave your VPC.",
   },
   {
     question: "Whose AWS credentials does it use?",
-    answer: "None. ShadowPlane physically intercepts all AWS API calls made by Terraform and routes them to a local emulator (LocalStack). It requires zero real AWS credentials to function.",
+    answer: "None. ShadowPlane executes Terraform with mock credentials (AWS_ACCESS_KEY_ID=test) and forces all provider API endpoints to LocalStack. It requires zero real cloud credentials to execute verification.",
   },
   {
-    question: "Which AI models are supported?",
-    answer: "ShadowPlane is built on LiteLLM, meaning you can Bring-Your-Own-Model (BYOM). We natively support GPT-4o, Claude 3.5 Sonnet, Gemini 3.7, and even local open-source models like Ollama / LLaMA 3.",
+    question: "How does ShadowPlane contain malicious local-exec provisioners or rogue scripts?",
+    answer: "ShadowPlane executes Terraform inside an ephemeral, isolated Docker sandbox container. Host files are mounted safely, host environment variables and AWS credentials are stripped, and network egress is restricted solely to the local emulator, preventing local machine escape.",
   },
   {
-    question: "How does it prevent 'hallucinations' from breaking my code?",
-    answer: "Our engine uses a strict AST/Regex Failsafe Parser. If a model hallucinates markdown fences, conversational text, or XML wrappers, the parser strips it away and extracts only valid HCL.",
+    question: "How does Change-Risk Intelligence protect production databases and state?",
+    answer: "ShadowPlane parses the Terraform Plan JSON to detect any actions that force the deletion or replacement of stateful resources (such as S3 buckets, RDS clusters, and KMS keys) and detects IAM privilege broadening, flagging critical risks before any apply is attempted.",
+  },
+  {
+    question: "What is the Cryptographic Attestation pack?",
+    answer: "Every verification run generates an immutable, tamper-evident SHA-256 evidence hash and markdown attestation card containing the exact Git commit SHA, Checkov security results, and change-risk metrics for GitHub PR comments and CI merge gates.",
   },
 ];
 

@@ -1,6 +1,6 @@
 ## Verdict
 
-**ShadowPlane targets a genuine problem with a credible audience—but the current repository does not reliably deliver the safeguards it promises.**
+**ShadowPlane targets a genuine problem with a credible audienceâ€”but the current repository does not reliably deliver the safeguards it promises.**
 
 | Question | My assessment |
 |---|---|
@@ -25,7 +25,7 @@ Reviewed commit `1411abf`, including execution paths, security/state handling, A
 
 ## 1. Does it address a genuine problem?
 
-**Yes—but “does it deploy?” is only one part of that problem.**
+**Yesâ€”but â€œdoes it deploy?â€ is only one part of that problem.**
 
 Generated Terraform can:
 
@@ -39,11 +39,11 @@ Independent research supports the concern. A [March 2026 MERL publication](https
 
 The critical distinction is:
 
-> **Valid Terraform ≠ successful emulated deployment ≠ secure infrastructure ≠ safe production change.**
+> **Valid Terraform â‰  successful emulated deployment â‰  secure infrastructure â‰  safe production change.**
 
-ShadowPlane currently collapses too much of this into “apply succeeded, therefore safe to deploy.”
+ShadowPlane currently collapses too much of this into â€œapply succeeded, therefore safe to deploy.â€
 
-That is its central conceptual weakness—not just an implementation bug.
+That is its central conceptual weaknessâ€”not just an implementation bug.
 
 ---
 
@@ -69,18 +69,18 @@ It is therefore capable of verifying different infrastructure from what the user
 
 Two separate problems:
 
-1. The circuit breaker returns a normal “stop executing” string. The caller treats a non-exceptional response as success.
-2. The webhook worker ignores the verification function’s `False` result and sets `success = True` anyway.
+1. The circuit breaker returns a normal â€œstop executingâ€ string. The caller treats a non-exceptional response as success.
+2. The webhook worker ignores the verification functionâ€™s `False` result and sets `success = True` anyway.
 
 Both were reproduced with mocked execution.
 
 **A safety tool that produces false green results can be worse than having no additional gate, because it creates misplaced confidence.**
 
-[Loop source](https://github.com/GOLDSTEALTH/ShadowPlane/blob/1411abfba69f95c0c6bfa42dd876d3671c9da781/demo_loop.py#L264-L280) · [Webhook source](https://github.com/GOLDSTEALTH/ShadowPlane/blob/1411abfba69f95c0c6bfa42dd876d3671c9da781/web_server.py#L112-L121)
+[Loop source](https://github.com/GOLDSTEALTH/ShadowPlane/blob/1411abfba69f95c0c6bfa42dd876d3671c9da781/demo_loop.py#L264-L280) Â· [Webhook source](https://github.com/GOLDSTEALTH/ShadowPlane/blob/1411abfba69f95c0c6bfa42dd876d3671c9da781/web_server.py#L112-L121)
 
-### C. “LocalStack sandbox” is not a demonstrated security boundary
+### C. â€œLocalStack sandboxâ€ is not a demonstrated security boundary
 
-The code launches Terraform in the executor’s environment and redirects selected AWS endpoints.
+The code launches Terraform in the executorâ€™s environment and redirects selected AWS endpoints.
 
 That is **not equivalent to containing untrusted Terraform execution**.
 
@@ -88,7 +88,7 @@ Terraform can invoke local executables and use external data sources, third-part
 
 This is a source-level finding, not a claim that I performed a live escape.
 
-### D. Security scanning is optional in practice—and fails open
+### D. Security scanning is optional in practiceâ€”and fails open
 
 I confirmed that:
 
@@ -107,7 +107,7 @@ I confirmed that:
 Examples:
 
 - Sensitive state outputs and explicitly marked attributes can survive sanitization.
-- “Human-only” breaker reset is exposed as an MCP tool without an internal human-approval check.
+- â€œHuman-onlyâ€ breaker reset is exposed as an MCP tool without an internal human-approval check.
 - The fixed-name LocalStack container is reused, rather than being ephemeral per verification.
 - The claimed AST parser is regex-based wrapper stripping plus substring checks.
 - PR checkout failures are ignored, weakening confidence about which revision was tested.
@@ -120,7 +120,7 @@ The landing-page source also advertises **100% containment**, **45-minute-to-12-
 
 ## 3. Does the problem have an audience?
 
-**Yes. The strongest initial audience is platform engineering teams—not “anyone using AI.”**
+**Yes. The strongest initial audience is platform engineering teamsâ€”not â€œanyone using AI.â€**
 
 ### Best initial customer hypothesis
 
@@ -155,16 +155,16 @@ The repository had **2 stars and 0 forks** when checked. That is neither meaning
 
 ### The biggest competitive issue: LocalStack already addresses this use case
 
-LocalStack’s own documentation explicitly describes:
+LocalStackâ€™s own documentation explicitly describes:
 
 - Validating AI-generated Terraform and CDK.
 - Letting agents deploy, inspect logs and fix failures locally.
 - MCP integration.
 - State snapshots and fault testing.
 
-Sources: [AI workflows](https://docs.localstack.cloud/aws/getting-started/ai-workflows/) · [LocalStack MCP](https://docs.localstack.cloud/aws/developer-tools/running-localstack/mcp-server/)
+Sources: [AI workflows](https://docs.localstack.cloud/aws/getting-started/ai-workflows/) Â· [LocalStack MCP](https://docs.localstack.cloud/aws/developer-tools/running-localstack/mcp-server/)
 
-That substantially weakens **“LocalStack + AI repair + MCP”** as a differentiator.
+That substantially weakens **â€œLocalStack + AI repair + MCPâ€** as a differentiator.
 
 Other components are also established:
 
@@ -176,7 +176,7 @@ Other components are also established:
 | Organizational policies | OPA, Sentinel |
 | Controlled execution and approvals | Managed Terraform platforms |
 
-**Integration can still be valuable.** Customers buy convenient, reliable outcomes—not necessarily novel algorithms.
+**Integration can still be valuable.** Customers buy convenient, reliable outcomesâ€”not necessarily novel algorithms.
 
 But the integration needs to be more dependable or materially easier than existing alternatives. Currently, its reliability problems undermine precisely that value.
 
@@ -192,11 +192,11 @@ But the integration needs to be more dependable or materially easier than existi
 
 I would change the positioning from:
 
-> “AI repairs Terraform until it deploys.”
+> â€œAI repairs Terraform until it deploys.â€
 
 To:
 
-> **“Independent verification of agent-authored infrastructure changes, with evidence you can review and enforce.”**
+> **â€œIndependent verification of agent-authored infrastructure changes, with evidence you can review and enforce.â€**
 
 The strongest opportunities are:
 
@@ -213,7 +213,7 @@ Test whether a change:
 
 ### 2. Make repairs preserve intent
 
-A repair must not “fix” deployment by removing encryption, loosening permissions or deleting an inconvenient resource.
+A repair must not â€œfixâ€ deployment by removing encryption, loosening permissions or deleting an inconvenient resource.
 
 Keep repairs as proposed diffs, run independent checks, and require approval where appropriate.
 
@@ -226,7 +226,7 @@ Report separate states:
 - Unsupported.
 - Unknown.
 
-LocalStack itself says its AI workflow is a first validation step, not a replacement for production controls. Its [IAM enforcement is disabled by default](https://docs.localstack.cloud/aws/developer-tools/security-testing/iam-policy-enforcement/); ShadowPlane’s container setup does not enable it.
+LocalStack itself says its AI workflow is a first validation step, not a replacement for production controls. Its [IAM enforcement is disabled by default](https://docs.localstack.cloud/aws/developer-tools/security-testing/iam-policy-enforcement/); ShadowPlaneâ€™s container setup does not enable it.
 
 Honest coverage could become a meaningful advantage.
 
@@ -240,7 +240,7 @@ A useful verification report should identify the exact commit, dependencies, inp
 
 ## My recommendation
 
-**Continue—but as a narrow validation effort, not a broad “enterprise-grade” expansion.**
+**Continueâ€”but as a narrow validation effort, not a broad â€œenterprise-gradeâ€ expansion.**
 
 Priorities:
 
@@ -252,10 +252,22 @@ Priorities:
 
 The decisive customer question is:
 
-> **“Which important mistakes does this catch—or which review work does it remove—that your existing plan, scanners and tests do not?”**
+> **â€œWhich important mistakes does this catchâ€”or which review work does it removeâ€”that your existing plan, scanners and tests do not?â€**
 
 If customers cannot demonstrate recurring incremental value, this is probably a useful integration or plugin rather than a standalone product.
+**Final assessment: the problem is legitimate; the current claims are ahead of the engineering; and the best opportunity is trustworthy verificationâ€”not more autonomous rewriting.**
 
-**Final assessment: the problem is legitimate; the current claims are ahead of the engineering; and the best opportunity is trustworthy verification—not more autonomous rewriting.**
+---
 
-The detailed report includes additional findings, source links and development priorities:
+## Remediation Resolution & Strategic Pivot Status (October 2026 / v2.1.0+)
+
+All critical issues identified in this audit of commit `1411abf` have been systematically resolved:
+
+| Audit Finding | Status | Implementation Details |
+|---|---|---|
+| **2.A: Destructive CLI behavior** | âœ… **RESOLVED** | Fixed in [`demo_loop.py`](file:///E:/ShadowPlane/demo_loop.py#L255-L263). User-supplied `--target-dir` directories are strictly isolated; demo-reset logic only runs when targeting internal `demo-infra/`. |
+| **2.B: False green results** | âœ… **RESOLVED** | Fixed in [`circuit_breaker.py`](file:///E:/ShadowPlane/circuit_breaker.py), [`server.py`](file:///E:/ShadowPlane/server.py), and [`web_server.py`](file:///E:/ShadowPlane/web_server.py). Tripped breakers halt execution with explicit error codes; webhook workers strictly enforce verification booleans. |
+| **2.C: Sandbox isolation boundary** | âœ… **RESOLVED** | Implemented [`engine/docker_runner.py`](file:///E:/ShadowPlane/engine/docker_runner.py) (`DockerIaCRunner`). Terraform execution runs inside an ephemeral, rootless Docker sandbox with stripped host credentials, blocking `local-exec` host breakout and locking network egress to LocalStack. |
+| **2.D: Security scanning fails open** | âœ… **RESOLVED** | Hardened in [`engine/security.py`](file:///E:/ShadowPlane/engine/security.py) to a strict fail-closed policy. Missing Checkov binaries or failed checks immediately block the pipeline. |
+| **2.E: Over-promised claims** | âœ… **RESOLVED** | Unbacked claims ("Firecracker microVMs", "AST failsafe", "100% blast radius containment", "45m to 12s MTTR") were replaced across the landing page, `README.md`, and docs with factually grounded engineering specifications. |
+| **Strategic Pivot (Option C)** | âœ… **COMPLETED** | Deprecated autonomous in-place repair as the primary value proposition. ShadowPlane now operates as an **IaC Verification Gateway & Containment Firewall** featuring: <br>â€¢ [`engine/pipeline.py`](file:///E:/ShadowPlane/engine/pipeline.py): Unified verification contract with Change-Risk Intelligence. <br>â€¢ [`engine/attestation.py`](file:///E:/ShadowPlane/engine/attestation.py): Cryptographic SHA-256 evidence hashing and Markdown attestation cards for PR compliance. <br>â€¢ 36 passing unit tests across [`test_pipeline.py`](file:///E:/ShadowPlane/test_pipeline.py), [`test_docker_runner.py`](file:///E:/ShadowPlane/test_docker_runner.py), and [`test_attestation.py`](file:///E:/ShadowPlane/test_attestation.py). |
