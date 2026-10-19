@@ -1,9 +1,6 @@
-# ShadowPlane
+# ShadowPlane - IaC Containment Firewall & Verification Gateway
 
-![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
+![Version](https://img.shields.io/badge/version-2.1.0-blue.svg) ![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg) ![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 
 ShadowPlane is a deterministic IaC Containment Firewall and Verification Gateway designed for Agentic DevOps.
 
