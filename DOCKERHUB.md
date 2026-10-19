@@ -1,6 +1,6 @@
 # ShadowPlane - IaC Containment Firewall & Verification Gateway
 
-[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://hub.docker.com/r/goldsteatlh/shadowplane) [![Docker Pulls](https://img.shields.io/docker/pulls/goldsteatlh/shadowplane.svg)](https://hub.docker.com/r/goldsteatlh/shadowplane) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/GOLDSTEALTH/ShadowPlane/blob/main/LICENSE) [![GitHub](https://img.shields.io/badge/GitHub-Repository-black?logo=github)](https://github.com/GOLDSTEALTH/ShadowPlane)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://hub.docker.com/r/goldsteatlh/shadowplane) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/GOLDSTEALTH/ShadowPlane/blob/main/LICENSE) [![GitHub](https://img.shields.io/badge/GitHub-Repository-black?logo=github)](https://github.com/GOLDSTEALTH/ShadowPlane)
 
 ShadowPlane is a deterministic Infrastructure as Code (IaC) containment firewall and verification gateway designed for Agentic DevOps.
 
