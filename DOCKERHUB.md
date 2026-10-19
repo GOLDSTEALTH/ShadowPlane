@@ -1,4 +1,4 @@
-# ShadowPlane — IaC Containment Firewall & Verification Gateway
+# ShadowPlane -- IaC Containment Firewall & Verification Gateway
 
 [![Docker Image Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://hub.docker.com/r/goldsteatlh/shadowplane)
 [![Docker Pulls](https://img.shields.io/docker/pulls/goldsteatlh/shadowplane.svg)](https://hub.docker.com/r/goldsteatlh/shadowplane)
