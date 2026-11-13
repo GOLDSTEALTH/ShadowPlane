@@ -98,9 +98,9 @@ def banner(text: str, char: str = "=", width: int = 72):
 # ---------------------------------------------------------------------------
 def parse_args():
     parser = argparse.ArgumentParser(
-        prog="shadowplane",
+        prog="shadoplane",
         description=(
-            "ShadowPlane — Autonomous Infrastructure Verification Pipeline. "
+            "ShadoPlane — Autonomous Infrastructure Verification Pipeline. "
             "Intercepts Terraform deployments, runs them in a LocalStack sandbox, "
             "evaluates change-risk intelligence, and gates the CI/CD pipeline."
         ),
@@ -115,7 +115,7 @@ Examples:
   python cli.py --target-dir ./infra --output-json attestation.json
   python cli.py --target-dir ./infra --no-docker --pr 42
   python cli.py --target-dir ./demo-infra --demo
-  docker run shadowplane --target-dir /workspace/infra
+  docker run shadoplane --target-dir /workspace/infra
 """,
     )
     parser.add_argument(
@@ -169,18 +169,18 @@ Examples:
     parser.add_argument(
         "--version",
         action="version",
-        version=f"ShadowPlane Gatekeeper v{VERSION}",
+        version=f"ShadoPlane Gatekeeper v{VERSION}",
         help="Show the version and exit",
     )
     return parser.parse_args()
 
 
 async def run(args):
-    """Execute the ShadowPlane verification pipeline."""
+    """Execute the ShadoPlane verification pipeline."""
     target = os.path.abspath(args.target_dir)
 
     # ── Header ────────────────────────────────────────────────────────────
-    banner("ShadowPlane Autonomous Verification Pipeline", char="=")
+    banner("ShadoPlane Autonomous Verification Pipeline", char="=")
     print(f"  Version          : v{VERSION}")
     print(f"  Target Directory : {target}")
     print(f"  Execution Mode   : {'Interactive Demo' if args.demo else 'Verification Gateway'}")

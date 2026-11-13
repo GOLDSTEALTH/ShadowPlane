@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-web_server.py — ShadowPlane Event-Driven CI/CD Gateway
+web_server.py — ShadoPlane Event-Driven CI/CD Gateway
 ======================================================
 Production-grade FastAPI server that:
   1. Receives GitHub pull_request webhooks at POST /webhook
@@ -39,7 +39,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     stream=sys.stderr,
 )
-logger = logging.getLogger("ShadowPlane-WebServer")
+logger = logging.getLogger("ShadoPlane-WebServer")
 
 # ---------------------------------------------------------------------------
 # Paths & Config
@@ -157,7 +157,7 @@ async def post_pr_comment(
     status_emoji = "✅" if success else "❌"
     status_text = "Passed" if success else "Failed"
 
-    body = f"""## {status_emoji} ShadowPlane Autonomous Verification Report
+    body = f"""## {status_emoji} ShadoPlane Autonomous Verification Report
 
 **Status**: {status_text}
 **Repository**: `{repo}`
@@ -193,7 +193,7 @@ async def post_pr_comment(
 </details>
 
 ---
-*ShadowPlane intercepted a deployment error, isolated the blast radius in a LocalStack sandbox, and autonomously repaired the infrastructure code.*
+*ShadoPlane intercepted a deployment error, isolated the blast radius in a LocalStack sandbox, and autonomously repaired the infrastructure code.*
 """
     elif not success:
         body += """### Failure Details
@@ -201,7 +201,7 @@ The autonomous repair loop was unable to resolve the infrastructure error within
 Please review the Terraform logs and fix the issue manually.
 
 ---
-*ShadowPlane intercepted a deployment error but could not auto-repair it.*
+*ShadoPlane intercepted a deployment error but could not auto-repair it.*
 """
 
     url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
@@ -242,13 +242,13 @@ def verify_signature(payload: bytes, signature: str | None, secret: str) -> bool
 async def lifespan(app: FastAPI):
     """Start the background worker on server startup."""
     worker_task = asyncio.create_task(background_worker())
-    logger.info("ShadowPlane Web Server starting up...")
+    logger.info("ShadoPlane Web Server starting up...")
     yield
     worker_task.cancel()
-    logger.info("ShadowPlane Web Server shutting down.")
+    logger.info("ShadoPlane Web Server shutting down.")
 
 
-app = FastAPI(title="ShadowPlane Gateway", lifespan=lifespan)
+app = FastAPI(title="ShadoPlane Gateway", lifespan=lifespan)
 
 # Mount static files (CSS, JS)
 app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")

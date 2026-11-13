@@ -16,7 +16,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     stream=sys.stderr
 )
-logger = logging.getLogger("ShadowPlane-Gateway")
+logger = logging.getLogger("ShadoPlane-Gateway")
 
 def load_env_file():
     """Lightweight custom parser to load key-value pairs from .env into os.environ."""
@@ -43,7 +43,7 @@ def load_env_file():
 load_env_file()
 
 # Initialize FastMCP server
-mcp = FastMCP("ShadowPlane-Gateway")
+mcp = FastMCP("ShadoPlane-Gateway")
 
 # Global in-memory log registry
 # Maps deployment_id (UUID or normalized directory path) -> record dict
@@ -614,7 +614,7 @@ async def reset_circuit_breaker(terraform_dir: str, auth_token: str = "") -> str
 
 def _cli_entry():
     """Console-script entry point for `shadowplane-server`."""
-    logger.info("Starting ShadowPlane-Gateway MCP server")
+    logger.info("Starting ShadoPlane-Gateway MCP server")
     mcp.run()
 
 if __name__ == "__main__":

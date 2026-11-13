@@ -17,13 +17,13 @@ def generate_markdown_attestation(report: VerificationReport) -> str:
     """
     if report.success:
         badge = "🟢 **PASSED**"
-        title = "ShadowPlane Verification Attestation: PASSED"
+        title = "ShadoPlane Verification Attestation: PASSED"
     elif report.deploy_result == VerificationStatus.BLOCKED or report.change_risk.risk_score == "CRITICAL":
         badge = "⛔ **BLOCKED (CRITICAL CHANGE RISK)**"
-        title = "ShadowPlane Verification Attestation: BLOCKED"
+        title = "ShadoPlane Verification Attestation: BLOCKED"
     else:
         badge = "🔴 **FAILED**"
-        title = "ShadowPlane Verification Attestation: FAILED"
+        title = "ShadoPlane Verification Attestation: FAILED"
 
     commit_display = f"`{report.commit_sha}`" if report.commit_sha else "_Not provided_"
     evidence_hash = report.evidence_hash or report.compute_evidence_hash()
@@ -81,7 +81,7 @@ def generate_markdown_attestation(report: VerificationReport) -> str:
         "> IAM policy enforcement and certain multi-region AWS constraints require live staging rehearsals.",
         "",
         "---",
-        "_Generated automatically by ShadowPlane Verification Gateway._",
+        "_Generated automatically by ShadoPlane Verification Gateway._",
     ])
 
     return "\n".join(md)

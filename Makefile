@@ -1,10 +1,10 @@
 .PHONY: help build run test
 
 VERSION := $(strip $(shell cat VERSION))
-IMAGE_NAME := shadowplane
+IMAGE_NAME := shadoplane
 
 help:
-	@echo "ShadowPlane Gatekeeper Makefile"
+	@echo "ShadoPlane Gatekeeper Makefile"
 	@echo ""
 	@echo "Commands:"
 	@echo "  make build    Build the Docker image using the current VERSION"

@@ -14,7 +14,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://shadowplane.vercel.app"),
+  metadataBase: new URL("https://shadoplane.vercel.app"),
   title: "ShadoPlane | The Flight Simulator for Terraform",
   description:
     "Intercept broken Terraform configurations, sandbox them in LocalStack, and enforce fail-closed security and Change-Risk Intelligence.",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     type: "website",
-    url: "https://shadowplane.vercel.app",
+    url: "https://shadoplane.vercel.app",
     title: "ShadoPlane | The Flight Simulator for Terraform",
     description:
       "Intercept broken Terraform configurations, sandbox them in LocalStack, and enforce fail-closed security and Change-Risk Intelligence.",

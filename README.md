@@ -1,14 +1,14 @@
-# ShadowPlane - IaC Containment Firewall & Verification Gateway
+# ShadoPlane - IaC Containment Firewall & Verification Gateway
 
 ![Version](https://img.shields.io/badge/version-2.1.0-blue.svg) ![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg) ![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 
-ShadowPlane is a deterministic Infrastructure as Code (IaC) Containment Firewall and Verification Gateway designed for Agentic DevOps.
+ShadoPlane is a deterministic Infrastructure as Code (IaC) Containment Firewall and Verification Gateway designed for Agentic DevOps.
 
-## About ShadowPlane
+## About ShadoPlane
 
 As AI coding agents (Claude Code, Cursor, Devin, GitHub Copilot Workspace) gain the ability to generate and modify infrastructure as code, the risk of an agent hallucinating invalid configurations, introducing security backdoors, or deleting stateful production resources skyrockets.
 
-ShadowPlane acts as an **IaC Verification Gateway & Execution Firewall**:
+ShadoPlane acts as an **IaC Verification Gateway & Execution Firewall**:
 1. **Isolated Docker Sandboxing**: Executes Terraform inside disposable, rootless Docker sandbox containers with host credentials stripped and network egress locked to LocalStack, neutralizing `local-exec` escape risks.
 2. **Fail-Closed Security**: Evaluates configurations against Checkov static analysis policies. Missing tools or security violations fail closed.
 3. **Change-Risk Intelligence**: Inspects plan JSON to proactively block destructive stateful resource drops (e.g. `aws_s3_bucket`, `aws_db_instance`, `aws_kms_key`) and alert on IAM privilege broadening.
@@ -18,7 +18,7 @@ ShadowPlane acts as an **IaC Verification Gateway & Execution Firewall**:
 ## The Architecture
 
 ```
-PR / Agent HCL ──> [ShadowPlane Verification Gateway]
+PR / Agent HCL ──> [ShadoPlane Verification Gateway]
                          │
                          ▼
         ┌───────────────────────────────────┐
@@ -66,7 +66,7 @@ curl -sSL https://raw.githubusercontent.com/GOLDSTEALTH/ShadowPlane/main/install
 ### From PyPI
 
 ```bash
-pip install shadowplane
+pip install shadoplane
 ```
 
 ### From source
@@ -86,34 +86,34 @@ pip install -e .
 
 ## CLI Commands
 
-After installation, three commands are available globally from any terminal:
+After installation, the CLI commands are available globally from any terminal:
 
 ```
-shadowplane             Run the verification pipeline
-shadowplane-server      Start the MCP gateway server
-shadowplane-engine      Run the enterprise engine
+shadoplane              Run the verification pipeline (alias: shadowplane)
+shadoplane-server       Start the MCP gateway server  (alias: shadowplane-server)
+shadoplane-engine       Run the enterprise engine     (alias: shadowplane-engine)
 ```
 
-### `shadowplane` — Verification Pipeline
+### `shadoplane` — Verification Pipeline
 
 ```bash
 # Verify infrastructure in a directory (Docker sandbox enabled by default)
-shadowplane --target-dir ./infra
+shadoplane --target-dir ./infra
 
 # Export signed JSON attestation pack
-shadowplane --target-dir ./infra --output-json attestation.json
+shadoplane --target-dir ./infra --output-json attestation.json
 
 # Run directly on host without Docker container sandbox
-shadowplane --target-dir ./infra --no-docker
+shadoplane --target-dir ./infra --no-docker
 
 # Verify and notify Slack with PR context
-shadowplane --target-dir ./infra --pr 42
+shadoplane --target-dir ./infra --pr 42
 
 # Run legacy interactive self-healing demo loop
-shadowplane --target-dir ./demo-infra --demo
+shadoplane --target-dir ./demo-infra --demo
 
 # Check version
-shadowplane --version
+shadoplane --version
 ```
 
 **Exit codes:**
@@ -122,12 +122,12 @@ shadowplane --version
 | `0` | Verification PASSED — safe to deploy |
 | `1` | Verification FAILED / BLOCKED — merge pipeline blocked |
 
-### `shadowplane-server` — MCP Gateway
+### `shadoplane-server` — MCP Gateway
 
 Starts the FastMCP server exposing tools for AI agents:
 
 ```bash
-shadowplane-server
+shadoplane-server
 ```
 
 **Available MCP tools:**
@@ -138,17 +138,17 @@ shadowplane-server
 | `read_sandbox_logs` | Read deployment logs by ID |
 | `reset_circuit_breaker` | Reset the safety breaker after human intervention |
 
-### `shadowplane-engine` — Enterprise Engine
+### `shadoplane-engine` — Enterprise Engine
 
 Runs the full Verification Gateway pipeline with Change-Risk Intelligence, Checkov security scanning, and Slack notifications:
 
 ```bash
-shadowplane-engine --target-dir ./infra --pr 42
+shadoplane-engine --target-dir ./infra --pr 42
 ```
 
 ## Circuit Breaker (Safety)
 
-ShadowPlane includes a built-in circuit breaker to prevent runaway retry loops. This is critical when AI agents call `clone_and_deploy` in a loop.
+ShadoPlane includes a built-in circuit breaker to prevent runaway retry loops. This is critical when AI agents call `clone_and_deploy` in a loop.
 
 **How it works:**
 - After **4 consecutive failures** for the same Terraform directory within a 300-second window, the breaker **trips**.
@@ -166,7 +166,7 @@ ShadowPlane includes a built-in circuit breaker to prevent runaway retry loops. 
 
 ## Quick Start (GitHub Actions)
 
-ShadowPlane is completely headless and Dockerized. You can drop it directly into your `.github/workflows/deploy.yml` file to gatekeep your Terraform deployments.
+ShadoPlane is completely headless and Dockerized. You can drop it directly into your `.github/workflows/deploy.yml` file to gatekeep your Terraform deployments.
 
 ### Using the Docker Container
 
@@ -186,8 +186,8 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: ShadowPlane Gatekeeper
-        uses: docker://goldsteatlh/shadowplane:2.1.0
+      - name: ShadoPlane Gatekeeper
+        uses: docker://goldsteatlh/shadoplane:2.1.0
         with:
           args: --target-dir ./infra --output-json attestation.json
         env:
@@ -198,7 +198,7 @@ jobs:
 ### Using the Native GitHub Action
 
 ```yaml
-      - name: ShadowPlane Verification
+      - name: ShadoPlane Verification
         uses: GOLDSTEALTH/ShadowPlane@v2.1.0
         with:
           target-dir: ./infra
@@ -215,16 +215,16 @@ To run the gatekeeper locally on your workstation to test infrastructure patches
 docker run --rm \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $(pwd)/infra:/workspace \
-  goldsteatlh/shadowplane:2.1.0 \
+  goldsteatlh/shadoplane:2.1.0 \
   --target-dir /workspace \
   --output-json /workspace/attestation.json
 ```
 
 ## Versioning
 
-ShadowPlane strictly follows [Semantic Versioning (SemVer)](https://semver.org/). 
+ShadoPlane strictly follows [Semantic Versioning (SemVer)](https://semver.org/). 
 
-The current version is defined in the `VERSION` file. When referencing ShadowPlane in your CI/CD pipelines, **always pin your workflows to a specific major/minor tag** (e.g., `docker://goldsteatlh/shadowplane:2.1.0` or `GOLDSTEALTH/ShadowPlane@v2.1.0`) to prevent breaking changes from interrupting your deployments.
+The current version is defined in the `VERSION` file. When referencing ShadoPlane in your CI/CD pipelines, **always pin your workflows to a specific major/minor tag** (e.g., `docker://goldsteatlh/shadoplane:2.1.0` or `GOLDSTEALTH/ShadowPlane@v2.1.0`) to prevent breaking changes from interrupting your deployments.
 
 ## Development
 

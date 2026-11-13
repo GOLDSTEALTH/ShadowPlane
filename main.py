@@ -34,7 +34,7 @@ class ShadowPlaneEngine:
         from engine.pipeline import VerificationPipeline, VerificationReport
         from engine.attestation import generate_markdown_attestation
 
-        self.log.info(f"========== SHADOWPLANE ENTERPRISE GATEWAY ==========")
+        self.log.info(f"========== SHADOPLANE ENTERPRISE GATEWAY ==========")
         self.log.info(f"[1/5] PR Webhook Received: PR #{self.pr_number}")
         
         # 1. Fetch Sanitized State

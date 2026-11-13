@@ -1,10 +1,10 @@
-# ShadowPlane - IaC Containment Firewall & Verification Gateway
+# ShadoPlane - IaC Containment Firewall & Verification Gateway
 
-[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://hub.docker.com/r/goldsteatlh/shadowplane) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/GOLDSTEALTH/ShadowPlane/blob/main/LICENSE) [![GitHub](https://img.shields.io/badge/GitHub-Repository-black?logo=github)](https://github.com/GOLDSTEALTH/ShadowPlane)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://hub.docker.com/r/goldsteatlh/shadoplane) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/GOLDSTEALTH/ShadowPlane/blob/main/LICENSE) [![GitHub](https://img.shields.io/badge/GitHub-Repository-black?logo=github)](https://github.com/GOLDSTEALTH/ShadowPlane)
 
-ShadowPlane is a deterministic Infrastructure as Code (IaC) containment firewall and verification gateway designed for Agentic DevOps.
+ShadoPlane is a deterministic Infrastructure as Code (IaC) containment firewall and verification gateway designed for Agentic DevOps.
 
-Before autonomous AI agents (Claude Code, Cursor, Devin, GitHub Copilot Workspace) or platform engineers apply Terraform configurations to production cloud environments, ShadowPlane intercepts configurations and evaluates them inside an isolated container sandbox with fail-closed security and Change-Risk Intelligence.
+Before autonomous AI agents (Claude Code, Cursor, Devin, GitHub Copilot Workspace) or platform engineers apply Terraform configurations to production cloud environments, ShadoPlane intercepts configurations and evaluates them inside an isolated container sandbox with fail-closed security and Change-Risk Intelligence.
 
 ---
 
@@ -15,7 +15,7 @@ As AI coding agents author and modify Terraform HCL, two critical failure modes 
 2. **Execution Breakouts**: Unvetted HCL with `local-exec` provisioners can escape the runner, access host credential files (`~/.aws/credentials`), and exfiltrate environment secrets.
 
 ```
-PR / Agent HCL ──> [ShadowPlane Verification Gateway]
+PR / Agent HCL ──> [ShadoPlane Verification Gateway]
                           │
                           ▼
          ┌───────────────────────────────────┐
@@ -50,7 +50,7 @@ PR / Agent HCL ──> [ShadowPlane Verification Gateway]
          (Exit 0: Safe to Deploy | Exit 1: Gate Blocked)
 ```
 
-ShadowPlane establishes an enforceable verification boundary:
+ShadoPlane establishes an enforceable verification boundary:
 * **Host-Isolated Sandboxing**: Executes Terraform inside disposable containers with stripped host credentials and network egress restricted to LocalStack.
 * **Change-Risk Intelligence**: Pre-scans Terraform plan JSON to detect destructive actions on stateful resources (`aws_rds_cluster`, `aws_s3_bucket`, `aws_kms_key`, `aws_dynamodb_table`) and flags IAM privilege broadening before `apply`.
 * **Fail-Closed Security**: Enforces Checkov static analysis; missing scanner binaries or policy violations immediately block the gate.
@@ -64,21 +64,21 @@ ShadowPlane establishes an enforceable verification boundary:
 ### 1. Pull the Image
 
 ```bash
-docker pull goldsteatlh/shadowplane:latest
+docker pull goldsteatlh/shadoplane:latest
 # Or pin to specific release tag:
-docker pull goldsteatlh/shadowplane:2.1.0
+docker pull goldsteatlh/shadoplane:2.1.0
 ```
 
 ### 2. Verify Infrastructure Locally
 
-Mount the Docker socket (allowing ShadowPlane to manage LocalStack emulation) and your infrastructure directory:
+Mount the Docker socket (allowing ShadoPlane to manage LocalStack emulation) and your infrastructure directory:
 
 **Linux / macOS:**
 ```bash
 docker run --rm \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $(pwd)/infra:/workspace \
-  goldsteatlh/shadowplane:2.1.0 \
+  goldsteatlh/shadoplane:2.1.0 \
   --target-dir /workspace \
   --output-json /workspace/attestation.json
 ```
@@ -88,7 +88,7 @@ docker run --rm \
 docker run --rm `
   -v //var/run/docker.sock:/var/run/docker.sock `
   -v ${PWD}/infra:/workspace `
-  goldsteatlh/shadowplane:2.1.0 `
+  goldsteatlh/shadoplane:2.1.0 `
   --target-dir /workspace `
   --output-json /workspace/attestation.json
 ```
@@ -96,10 +96,10 @@ docker run --rm `
 ### 3. CLI Command Options
 
 ```text
-usage: shadowplane [-h] [--target-dir TARGET_DIR] [--output-json OUTPUT_JSON]
-                   [--no-docker] [--pr PR] [--demo]
-                   [--max-retries MAX_RETRIES] [--ai-model AI_MODEL]
-                   [--ai-base-url AI_BASE_URL] [--version]
+usage: shadoplane [-h] [--target-dir TARGET_DIR] [--output-json OUTPUT_JSON]
+                  [--no-docker] [--pr PR] [--demo]
+                  [--max-retries MAX_RETRIES] [--ai-model AI_MODEL]
+                  [--ai-base-url AI_BASE_URL] [--version]
 
 options:
   --target-dir TARGET_DIR   Path to the Terraform directory to verify (default: ./demo-infra)
@@ -112,7 +112,7 @@ options:
 
 ### 4. Execution Exit Codes
 
-ShadowPlane enforces deterministic exit codes designed for automated CI/CD runners:
+ShadoPlane enforces deterministic exit codes designed for automated CI/CD runners:
 
 | Exit Code | Status | Outcome |
 |:---:|---|---|
@@ -133,15 +133,15 @@ on:
     branches: [ main ]
 
 jobs:
-  shadowplane-gate:
-    name: ShadowPlane Verification Gateway
+  shadoplane-gate:
+    name: ShadoPlane Verification Gateway
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Run ShadowPlane Verification
-        uses: docker://goldsteatlh/shadowplane:2.1.0
+      - name: Run ShadoPlane Verification
+        uses: docker://goldsteatlh/shadoplane:2.1.0
         with:
           args: --target-dir ./infra --output-json attestation.json
         env:
@@ -152,7 +152,7 @@ jobs:
 ### Option B: Using the GitHub Action (`action.yml`)
 
 ```yaml
-      - name: Run ShadowPlane Action
+      - name: Run ShadoPlane Action
         uses: GOLDSTEALTH/ShadowPlane@v2.1.0
         with:
           target-dir: ./infra

@@ -1,5 +1,5 @@
 /**
- * app.js — ShadowPlane Web Dashboard (Event-Driven)
+ * app.js — ShadoPlane Web Dashboard (Event-Driven)
  * ==================================================
  * Connects to the /ws WebSocket endpoint on page load.
  * Listens for incoming job payloads, log events, timeline
@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ws.onopen = () => {
             wsDot.className = 'dot active';
             wsText.textContent = 'Connected';
-            appendLog('[WS] Connected to ShadowPlane Gateway.', 'success');
+            appendLog('[WS] Connected to ShadoPlane Gateway.', 'success');
             if (reconnectTimer) {
                 clearTimeout(reconnectTimer);
                 reconnectTimer = null;
@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 case 'done':
                     steps['success'].classList.add('active', 'completed');
-                    appendLog('\n[OK] ShadowPlane Verification Passed.', 'success');
+                    appendLog('\n[OK] ShadoPlane Verification Passed.', 'success');
                     jobStatus.textContent = 'Verified';
                     jobStatus.className = 'job-status success';
                     break;

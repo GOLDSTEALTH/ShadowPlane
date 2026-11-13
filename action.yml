@@ -1,5 +1,5 @@
-name: "ShadowPlane IaC Verification Gateway"
-description: "ShadowPlane — IaC Verification Gateway. Verifies Terraform infrastructure in an isolated LocalStack sandbox with fail-closed security scanning and change-risk intelligence."
+name: "ShadoPlane IaC Verification Gateway"
+description: "ShadoPlane — IaC Verification Gateway. Verifies Terraform infrastructure in an isolated LocalStack sandbox with fail-closed security scanning and change-risk intelligence."
 author: "GOLDSTEALTH"
 
 inputs:
@@ -10,7 +10,7 @@ inputs:
   output-json:
     description: "Filepath to export signed JSON attestation pack"
     required: false
-    default: "shadowplane-attestation.json"
+    default: "shadoplane-attestation.json"
   no-docker:
     description: "Force host-level execution instead of Docker container runner"
     required: false
@@ -23,12 +23,12 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install ShadowPlane Dependencies
+    - name: Install ShadoPlane Dependencies
       shell: bash
       run: |
         python -m pip install --upgrade pip && pip install -e "${{ github.action_path }}"
 
-    - name: Run ShadowPlane Verification Pipeline
+    - name: Run ShadoPlane Verification Pipeline
       shell: bash
       env:
         INPUT_TARGET_DIR: ${{ inputs.target-dir }}

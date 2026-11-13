@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
     },
-    sitemap: 'https://shadowplane.vercel.app/sitemap.xml',
+    sitemap: 'https://shadoplane.vercel.app/sitemap.xml',
   }
 }

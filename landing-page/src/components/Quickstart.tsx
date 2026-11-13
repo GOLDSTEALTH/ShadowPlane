@@ -4,7 +4,7 @@ import { useState } from "react";
 
 export default function Quickstart() {
   const [copied, setCopied] = useState(false);
-  const code = `# Install the CLI globally\npip install -e .\n\n# Start the Webhook Interceptor\nshadowplane-server\n\n# Or run manual tests with any model (BYOM)\nshadowplane --target-dir ./demo-infra --ai-model gpt-4o`;
+  const code = `# Install the CLI globally\npip install -e .\n\n# Start the Webhook Interceptor\nshadoplane-server\n\n# Or run manual tests with any model (BYOM)\nshadoplane --target-dir ./demo-infra --ai-model gpt-4o`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
@@ -27,7 +27,7 @@ export default function Quickstart() {
             <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
             <span className="w-3 h-3 rounded-full bg-green-500/80" />
             <span className="text-xs text-zinc-500 font-mono ml-3 select-none">
-              bash — shadowplane
+              bash — shadoplane
             </span>
           </div>
 
@@ -76,11 +76,11 @@ export default function Quickstart() {
             <br /><br />
             <span className="text-zinc-500"># Start the Webhook Interceptor</span>
             <br />
-            <span className="text-emerald-400">shadowplane-server</span>
+            <span className="text-emerald-400">shadoplane-server</span>
             <br /><br />
             <span className="text-zinc-500"># Or run manual tests with any model (BYOM)</span>
             <br />
-            <span className="text-emerald-400">shadowplane</span> --target-dir ./demo-infra --ai-model <span className="text-yellow-400">gpt-4o</span>
+            <span className="text-emerald-400">shadoplane</span> --target-dir ./demo-infra --ai-model <span className="text-yellow-400">gpt-4o</span>
           </div>
         </div>
       </div>

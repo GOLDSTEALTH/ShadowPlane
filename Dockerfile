@@ -1,5 +1,5 @@
 # ============================================================================
-# ShadowPlane — Production Dockerfile
+# ShadoPlane — Production Dockerfile
 # ============================================================================
 # Multi-stage build for a lean, production-ready container.
 # ============================================================================
@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 FROM python:3.13-slim
 
 LABEL maintainer="GOLDSTEALTH"
-LABEL description="ShadowPlane — Autonomous Infrastructure Verification Pipeline"
+LABEL description="ShadoPlane — Autonomous Infrastructure Verification Pipeline"
 LABEL org.opencontainers.image.source="https://github.com/GOLDSTEALTH/ShadowPlane"
 
 # -- System dependencies ----------------------------------------------------

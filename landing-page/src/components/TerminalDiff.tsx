@@ -1,12 +1,12 @@
 export default function TerminalDiff() {
   const brokenLines = [
     { text: `resource "aws_s3_bucket" "app_assets" {`, hl: false },
-    { text: `  bucket = "shadowplane_enterprise_assets_prod"`, hl: true },
+    { text: `  bucket = "shadoplane_enterprise_assets_prod"`, hl: true },
     { text: `  # ↑ InvalidBucketName: underscores are illegal`, hl: true },
     { text: `}`, hl: false },
     { text: ``, hl: false },
     { text: `resource "aws_dynamodb_table" "agent_state" {`, hl: false },
-    { text: `  name         = "ShadowPlane-Agent-State"`, hl: false },
+    { text: `  name         = "ShadoPlane-Agent-State"`, hl: false },
     { text: `  billing_mode = "PROVISIONED"`, hl: true },
     { text: `  hash_key     = "LockID"`, hl: false },
     { text: `  # ↑ Missing read_capacity / write_capacity`, hl: true },
@@ -20,12 +20,12 @@ export default function TerminalDiff() {
 
   const patchedLines = [
     { text: `resource "aws_s3_bucket" "app_assets" {`, hl: false },
-    { text: `  bucket = "shadowplane-enterprise-assets-prod"`, hl: true },
+    { text: `  bucket = "shadoplane-enterprise-assets-prod"`, hl: true },
     { text: `  # ✓ Hyphens used — bucket name now valid`, hl: true },
     { text: `}`, hl: false },
     { text: ``, hl: false },
     { text: `resource "aws_dynamodb_table" "agent_state" {`, hl: false },
-    { text: `  name           = "ShadowPlane-Agent-State"`, hl: false },
+    { text: `  name           = "ShadoPlane-Agent-State"`, hl: false },
     { text: `  billing_mode   = "PROVISIONED"`, hl: false },
     { text: `  hash_key       = "LockID"`, hl: false },
     { text: `  read_capacity  = 5`, hl: true },
@@ -50,7 +50,7 @@ export default function TerminalDiff() {
             <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-green-500/80" />
           </div>
           <span className="text-[11px] sm:text-xs text-zinc-500 font-mono ml-1 sm:ml-2 truncate">
-            shadowplane — main.tf diff
+            shadoplane — main.tf diff
           </span>
           <div className="flex-1" />
           <span className="text-[9px] sm:text-[10px] text-cyan-500 font-mono tracking-wider shrink-0 hidden xs:inline-block">
