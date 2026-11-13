@@ -15,9 +15,9 @@ const jetbrains = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://shadowplane.vercel.app"),
-  title: "ShadowPlane | The Flight Simulator for Terraform",
+  title: "ShadoPlane | The Flight Simulator for Terraform",
   description:
-    "Intercept broken Terraform configurations, sandbox them in LocalStack, and auto-heal AWS API failures via the autonomous ShadowPatch engine.",
+    "Intercept broken Terraform configurations, sandbox them in LocalStack, and enforce fail-closed security and Change-Risk Intelligence.",
   keywords: [
     "DevOps",
     "CI/CD",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     "Terraform",
     "LocalStack",
     "FastMCP",
-    "ShadowPatch",
+    "Checkov",
     "HCL",
     "AWS Sandbox",
     "Platform Engineering"
@@ -33,23 +33,23 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "https://shadowplane.vercel.app",
-    title: "ShadowPlane | The Flight Simulator for Terraform",
+    title: "ShadoPlane | The Flight Simulator for Terraform",
     description:
-      "Intercept broken Terraform configurations, sandbox them in LocalStack, and auto-heal AWS API failures via the autonomous ShadowPatch engine.",
+      "Intercept broken Terraform configurations, sandbox them in LocalStack, and enforce fail-closed security and Change-Risk Intelligence.",
     images: [
       {
         url: "/landingpage_preview.png",
         width: 1200,
         height: 630,
-        alt: "ShadowPlane Platform",
+        alt: "ShadoPlane Platform",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "ShadowPlane | The Flight Simulator for Terraform",
+    title: "ShadoPlane | The Flight Simulator for Terraform",
     description:
-      "Intercept broken Terraform configurations, sandbox them in LocalStack, and auto-heal AWS API failures via the autonomous ShadowPatch engine.",
+      "Intercept broken Terraform configurations, sandbox them in LocalStack, and enforce fail-closed security and Change-Risk Intelligence.",
     images: ["/landingpage_preview.png"],
   },
 };
@@ -62,7 +62,7 @@ export default function RootLayout({
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "ShadowPlane",
+    name: "ShadoPlane",
     applicationCategory: "DeveloperApplication",
     operatingSystem: "Web, Docker, Linux",
     description:

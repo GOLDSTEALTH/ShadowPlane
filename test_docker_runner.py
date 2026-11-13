@@ -36,11 +36,16 @@ class TestDockerIaCRunner(unittest.TestCase):
         self.assertIn("AWS_ENDPOINT_URL", env)
 
     def test_run_container_success(self):
-        """Successful container run returns exit_code 0 and stdout."""
+        """Successful container run returns exit_code 0, stdout from separated logs, and verifies cap_drop."""
         self.mock_client.ping.return_value = True
         mock_container = MagicMock()
         mock_container.wait.return_value = {"StatusCode": 0}
-        mock_container.logs.return_value = b"Terraform initialized successfully!"
+        
+        def logs_dispatch(stdout=True, stderr=True):
+            if stdout and not stderr:
+                return b"Terraform initialized successfully!"
+            return b""
+        mock_container.logs.side_effect = logs_dispatch
         self.mock_client.containers.create.return_value = mock_container
 
         res = self.runner.init("./mock_infra")
@@ -48,14 +53,29 @@ class TestDockerIaCRunner(unittest.TestCase):
         self.assertTrue(res["success"])
         self.assertEqual(res["exit_code"], 0)
         self.assertIn("Terraform initialized", res["stdout"])
+        self.assertEqual(res["stderr"], "")
         mock_container.remove.assert_called_with(force=True)
 
+        # Verify hardened container creation settings
+        create_kwargs = self.mock_client.containers.create.call_args.kwargs
+        self.assertEqual(create_kwargs.get("cap_drop"), ["ALL"])
+        self.assertEqual(create_kwargs.get("security_opt"), ["no-new-privileges:true"])
+
+        # Verify separated container.logs calls
+        self.assertIn((( ), {"stdout": True, "stderr": False}), mock_container.logs.call_args_list)
+        self.assertIn((( ), {"stdout": False, "stderr": True}), mock_container.logs.call_args_list)
+
     def test_run_container_failure(self):
-        """Non-zero exit code returns success=False and logs in stderr."""
+        """Non-zero exit code returns success=False and separated stderr."""
         self.mock_client.ping.return_value = True
         mock_container = MagicMock()
         mock_container.wait.return_value = {"StatusCode": 1}
-        mock_container.logs.return_value = b"Error: Configuration invalid"
+        
+        def logs_dispatch(stdout=True, stderr=True):
+            if stderr and not stdout:
+                return b"Error: Configuration invalid"
+            return b""
+        mock_container.logs.side_effect = logs_dispatch
         self.mock_client.containers.create.return_value = mock_container
 
         res = self.runner.init("./mock_infra")
@@ -63,6 +83,29 @@ class TestDockerIaCRunner(unittest.TestCase):
         self.assertFalse(res["success"])
         self.assertEqual(res["exit_code"], 1)
         self.assertIn("Configuration invalid", res["stderr"])
+
+        # Verify separated logs calls
+        self.assertIn((( ), {"stdout": True, "stderr": False}), mock_container.logs.call_args_list)
+        self.assertIn((( ), {"stdout": False, "stderr": True}), mock_container.logs.call_args_list)
+
+    def test_run_container_failure_stderr_fallback_to_stdout(self):
+        """When stderr is empty on non-zero exit, fallback to stdout."""
+        self.mock_client.ping.return_value = True
+        mock_container = MagicMock()
+        mock_container.wait.return_value = {"StatusCode": 1}
+        
+        def logs_dispatch(stdout=True, stderr=True):
+            if stdout and not stderr:
+                return b"Fatal output in stdout stream"
+            return b""
+        mock_container.logs.side_effect = logs_dispatch
+        self.mock_client.containers.create.return_value = mock_container
+
+        res = self.runner.init("./mock_infra")
+
+        self.assertFalse(res["success"])
+        self.assertEqual(res["exit_code"], 1)
+        self.assertIn("Fatal output in stdout stream", res["stderr"])
 
     @patch("engine.docker_runner.circuit_breaker")
     def test_apply_blocked_by_circuit_breaker(self, mock_cb):

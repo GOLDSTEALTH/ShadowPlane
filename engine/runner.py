@@ -102,11 +102,13 @@ class IaCRunner:
                 "stderr": result.stderr
             }
         except subprocess.TimeoutExpired as e:
+            out = e.stdout.decode(errors="replace") if isinstance(e.stdout, bytes) else (e.stdout or "")
+            err = e.stderr.decode(errors="replace") if isinstance(e.stderr, bytes) else (e.stderr or "")
             return {
                 "success": False,
                 "exit_code": 124,
-                "stdout": e.stdout.decode() if e.stdout else "",
-                "stderr": f"Command timed out after {e.timeout}s"
+                "stdout": out,
+                "stderr": f"Command timed out after {e.timeout}s: {err}".strip()
             }
 
     def init(self, target_dir: str) -> Dict[str, Any]:

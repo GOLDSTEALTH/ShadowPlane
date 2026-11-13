@@ -21,8 +21,12 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <a href="#" className="text-lg sm:text-xl font-bold text-zinc-100 tracking-tight hover:text-white transition-colors">
-            ShadowPlane
+          <a href="#" className="flex items-center hover:opacity-90 transition-opacity">
+            <img 
+              src="/shadoplane-logo.png" 
+              alt="ShadoPlane" 
+              className="h-7 sm:h-8 w-auto object-contain" 
+            />
           </a>
           <span className="text-[9px] sm:text-[10px] text-zinc-400 border border-zinc-800 rounded-full px-1.5 py-0.5 font-mono">
             v2.1.0

@@ -5,20 +5,20 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const faqs = [
   {
-    question: "Does ShadowPlane download my production state files?",
-    answer: "No. Downloading production terraform.tfstate files exposes secrets (like DB passwords). Instead, ShadowPlane uses state sanitization to redact sensitive attributes and outputs, and can pre-warm state from your base branch directly into LocalStack. Your production credentials and real secrets never leave your VPC.",
+    question: "Does ShadoPlane download my production state files?",
+    answer: "No. Downloading production terraform.tfstate files exposes secrets (like DB passwords). Instead, ShadoPlane uses state sanitization to redact sensitive attributes and outputs, and can pre-warm state from your base branch directly into LocalStack. Your production credentials and real secrets never leave your VPC.",
   },
   {
     question: "Whose AWS credentials does it use?",
-    answer: "None. ShadowPlane executes Terraform with mock credentials (AWS_ACCESS_KEY_ID=test) and forces all provider API endpoints to LocalStack. It requires zero real cloud credentials to execute verification.",
+    answer: "None. ShadoPlane executes Terraform with mock credentials (AWS_ACCESS_KEY_ID=test) and forces all provider API endpoints to LocalStack. It requires zero real cloud credentials to execute verification.",
   },
   {
-    question: "How does ShadowPlane contain malicious local-exec provisioners or rogue scripts?",
-    answer: "ShadowPlane executes Terraform inside an ephemeral, isolated Docker sandbox container. Host files are mounted safely, host environment variables and AWS credentials are stripped, and network egress is restricted solely to the local emulator, preventing local machine escape.",
+    question: "How does ShadoPlane contain malicious local-exec provisioners or rogue scripts?",
+    answer: "ShadoPlane executes Terraform inside an ephemeral, isolated Docker sandbox container. Host files are mounted safely, host environment variables and AWS credentials are stripped, and network egress is restricted solely to the local emulator, preventing local machine escape.",
   },
   {
     question: "How does Change-Risk Intelligence protect production databases and state?",
-    answer: "ShadowPlane parses the Terraform Plan JSON to detect any actions that force the deletion or replacement of stateful resources (such as S3 buckets, RDS clusters, and KMS keys) and detects IAM privilege broadening, flagging critical risks before any apply is attempted.",
+    answer: "ShadoPlane parses the Terraform Plan JSON to detect any actions that force the deletion or replacement of stateful resources (such as S3 buckets, RDS clusters, and KMS keys) and detects IAM privilege broadening, flagging critical risks before any apply is attempted.",
   },
   {
     question: "What is the Cryptographic Attestation pack?",

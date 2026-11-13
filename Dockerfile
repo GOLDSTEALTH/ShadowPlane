@@ -11,8 +11,10 @@ FROM python:3.13-slim AS builder
 
 WORKDIR /build
 
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:${PATH}"
 COPY requirements.txt .
-RUN pip install --no-cache-dir --target /build/deps -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # ---------------------------------------------------------------------------
 # Stage 2: Runtime — lean production image
@@ -29,6 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     ca-certificates \
     docker.io \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # -- Install Terraform (Verified) --------------------------------------------
@@ -45,13 +48,14 @@ RUN set -eux; \
     rm -f "${archive}" "terraform_${TERRAFORM_VERSION}_SHA256SUMS"; \
     terraform version
 
+# -- Python virtual environment from builder stage ---------------------------
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:/usr/local/bin:${PATH}"
+
 # -- Least Privilege (Non-Root User) -----------------------------------------
 RUN groupadd -r shadowplane && useradd -r -g shadowplane -d /app -s /sbin/nologin shadowplane \
     && mkdir -p /app \
     && chown -R shadowplane:shadowplane /app
-
-# -- Python dependencies from builder stage ----------------------------------
-COPY --from=builder /build/deps /usr/local/lib/python3.13/site-packages/
 
 # -- Application code --------------------------------------------------------
 WORKDIR /app

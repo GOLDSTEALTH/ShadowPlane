@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-2.1.0-blue.svg) ![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg) ![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 
-ShadowPlane is a deterministic IaC Containment Firewall and Verification Gateway designed for Agentic DevOps.
+ShadowPlane is a deterministic Infrastructure as Code (IaC) Containment Firewall and Verification Gateway designed for Agentic DevOps.
 
 ## About ShadowPlane
 
@@ -18,7 +18,7 @@ ShadowPlane acts as an **IaC Verification Gateway & Execution Firewall**:
 ## The Architecture
 
 ```
-PR / Agent HCL ──> [ShadowPlane Gateway]
+PR / Agent HCL ──> [ShadowPlane Verification Gateway]
                          │
                          ▼
         ┌───────────────────────────────────┐
@@ -80,7 +80,7 @@ pip install -e .
 ### Requirements
 
 - Python 3.10+
-- Docker (for LocalStack sandbox)
+- Docker (for LocalStack sandbox and container runner)
 - Terraform or OpenTofu
 - Git
 
@@ -97,11 +97,20 @@ shadowplane-engine      Run the enterprise engine
 ### `shadowplane` — Verification Pipeline
 
 ```bash
-# Verify infrastructure in a directory
-shadowplane --target-dir ./my-infra
+# Verify infrastructure in a directory (Docker sandbox enabled by default)
+shadowplane --target-dir ./infra
 
-# Set max execution attempts before circuit breaker trips
-shadowplane --target-dir ./infra --max-retries 3
+# Export signed JSON attestation pack
+shadowplane --target-dir ./infra --output-json attestation.json
+
+# Run directly on host without Docker container sandbox
+shadowplane --target-dir ./infra --no-docker
+
+# Verify and notify Slack with PR context
+shadowplane --target-dir ./infra --pr 42
+
+# Run legacy interactive self-healing demo loop
+shadowplane --target-dir ./demo-infra --demo
 
 # Check version
 shadowplane --version
@@ -111,7 +120,7 @@ shadowplane --version
 | Code | Meaning |
 |------|---------|
 | `0` | Verification PASSED — safe to deploy |
-| `1` | Verification FAILED — pipeline blocked |
+| `1` | Verification FAILED / BLOCKED — merge pipeline blocked |
 
 ### `shadowplane-server` — MCP Gateway
 
@@ -125,6 +134,7 @@ shadowplane-server
 | Tool | Description |
 |------|-------------|
 | `clone_and_deploy` | Deploy Terraform configs in a LocalStack sandbox |
+| `verify_infrastructure` | Run full Checkov, Change-Risk, and LocalStack verification pipeline |
 | `read_sandbox_logs` | Read deployment logs by ID |
 | `reset_circuit_breaker` | Reset the safety breaker after human intervention |
 
@@ -141,7 +151,7 @@ shadowplane-engine --target-dir ./infra --pr 42
 ShadowPlane includes a built-in circuit breaker to prevent runaway retry loops. This is critical when AI agents call `clone_and_deploy` in a loop.
 
 **How it works:**
-- After **4 consecutive failures** for the same Terraform directory, the breaker **trips**
+- After **4 consecutive failures** for the same Terraform directory within a 300-second window, the breaker **trips**.
 - All subsequent calls return a hard-stop message instead of Terraform output:
   ```
   SYSTEM OVERRIDE: MAX RETRIES EXCEEDED. YOU MUST STOP EXECUTING.
@@ -158,6 +168,8 @@ ShadowPlane includes a built-in circuit breaker to prevent runaway retry loops. 
 
 ShadowPlane is completely headless and Dockerized. You can drop it directly into your `.github/workflows/deploy.yml` file to gatekeep your Terraform deployments.
 
+### Using the Docker Container
+
 ```yaml
 name: Deploy Infrastructure
 
@@ -172,34 +184,47 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: ShadowPlane Gatekeeper
         uses: docker://goldsteatlh/shadowplane:2.1.0
         with:
-          args: --target-dir ./infra --max-retries 5
+          args: --target-dir ./infra --output-json attestation.json
         env:
-          # Optional: LocalStack Pro token for advanced AWS features
           LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+```
+
+### Using the Native GitHub Action
+
+```yaml
+      - name: ShadowPlane Verification
+        uses: GOLDSTEALTH/ShadowPlane@v2.1.0
+        with:
+          target-dir: ./infra
+          output-json: attestation.json
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 ```
 
 ## Local Execution (Docker)
 
-To run the gatekeeper locally on your workstation to test infrastructure patches, just run the Docker image. You must bind-mount the Docker socket so ShadowPlane can spin up its LocalStack sandbox.
+To run the gatekeeper locally on your workstation to test infrastructure patches, run the Docker image with your directory mounted:
 
 ```bash
 docker run --rm \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $(pwd)/infra:/app/infra \
+  -v $(pwd)/infra:/workspace \
   goldsteatlh/shadowplane:2.1.0 \
-  --target-dir ./infra
+  --target-dir /workspace \
+  --output-json /workspace/attestation.json
 ```
 
 ## Versioning
 
 ShadowPlane strictly follows [Semantic Versioning (SemVer)](https://semver.org/). 
 
-The current version is defined in the `VERSION` file. When referencing ShadowPlane in your CI/CD pipelines, **always pin your workflows to a specific major/minor tag** (e.g., `docker://goldsteatlh/shadowplane:2.1.0`) to prevent breaking changes from interrupting your deployments.
+The current version is defined in the `VERSION` file. When referencing ShadowPlane in your CI/CD pipelines, **always pin your workflows to a specific major/minor tag** (e.g., `docker://goldsteatlh/shadowplane:2.1.0` or `GOLDSTEALTH/ShadowPlane@v2.1.0`) to prevent breaking changes from interrupting your deployments.
 
 ## Development
 
@@ -212,6 +237,6 @@ Use the included Makefile for local development:
 # Install in editable mode with dev dependencies
 pip install -e ".[dev]"
 
-# Run full unit test suite (36 tests)
+# Run full unit test suite (39 tests)
 python -m unittest discover -s . -p "test_*.py" -v
 ```

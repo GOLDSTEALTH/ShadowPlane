@@ -17,7 +17,8 @@ class StateSanitizer:
             return
         for k, v in list(d.items()):
             if any(sensitive in k.lower() for sensitive in self.SENSITIVE_KEYS):
-                d[k] = "REDACTED_BY_SHADOWPLANE"
+                if isinstance(v, str):
+                    d[k] = "REDACTED_BY_SHADOWPLANE"
             elif isinstance(v, dict):
                 self._sanitize_dict(v)
             elif isinstance(v, list):
@@ -49,15 +50,15 @@ class StateSanitizer:
                                 for path_element in attr_path:
                                     if isinstance(path_element, dict) and "value" in path_element:
                                         key = path_element["value"]
-                                        if key in instance["attributes"]:
+                                        if key in instance["attributes"] and isinstance(instance["attributes"][key], str):
                                             instance["attributes"][key] = "REDACTED_BY_SHADOWPLANE"
                         
             # Sanitize top-level outputs
             for output_name, output_data in state_data.get("outputs", {}).items():
                 if isinstance(output_data, dict):
-                    if output_data.get("sensitive", False):
+                    if output_data.get("sensitive", False) and isinstance(output_data.get("value"), str):
                         output_data["value"] = "REDACTED_BY_SHADOWPLANE"
-                    elif any(s in output_name.lower() for s in self.SENSITIVE_KEYS):
+                    elif any(s in output_name.lower() for s in self.SENSITIVE_KEYS) and isinstance(output_data.get("value"), str):
                         output_data["value"] = "REDACTED_BY_SHADOWPLANE"
                         
             # Write sanitized state
@@ -66,8 +67,8 @@ class StateSanitizer:
                 json.dump(state_data, f, indent=2)
             
             # Temporarily replace state
-            os.rename(self.state_file, self.state_file + ".backup")
-            os.rename(sanitized_path, self.state_file)
+            os.replace(self.state_file, self.state_file + ".backup")
+            os.replace(sanitized_path, self.state_file)
             
             return True
         except Exception as e:
@@ -79,4 +80,4 @@ class StateSanitizer:
         if os.path.exists(backup):
             if os.path.exists(self.state_file):
                 os.remove(self.state_file)
-            os.rename(backup, self.state_file)
+            os.replace(backup, self.state_file)

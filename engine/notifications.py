@@ -72,3 +72,49 @@ class SlackNotifier:
         except Exception as e:
             print(f"[Slack] Failed to send webhook: {e}")
             return False
+
+    def send_attestation_report(self, pr_number: str, attestation_md: str, success: bool) -> bool:
+        """Posts the Markdown attestation summary directly to Slack."""
+        if not self.webhook_url:
+            print("[Slack] No SLACK_WEBHOOK_URL configured, skipping notification.")
+            return False
+
+        header_text = f"✅ ShadowPlane Verification Passed (PR #{pr_number})" if success else f"❌ ShadowPlane Verification Failed (PR #{pr_number})"
+
+        # Slack mrkdwn blocks have a 3000 character limit
+        content = attestation_md if len(attestation_md) <= 2900 else attestation_md[:2900] + "\n\n_...(truncated)_"
+
+        blocks = [
+            {
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": header_text,
+                    "emoji": True
+                }
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": content
+                }
+            },
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": "🛡️ ShadowPlane Verification Gateway"
+                    }
+                ]
+            }
+        ]
+
+        try:
+            response = httpx.post(self.webhook_url, json={"blocks": blocks})
+            response.raise_for_status()
+            return True
+        except Exception as e:
+            print(f"[Slack] Failed to send webhook: {e}")
+            return False

@@ -63,7 +63,7 @@ export default function WebhooksDashboard() {
       // Use standard browser WS, mock URL for UI dev if not available
       const protocol = window.location.protocol === "https:" ? "wss" : "ws";
       // Pointing to localhost:8000 where the python fastapi web_server.py is running
-      const wsUrl = `${protocol}://${window.location.hostname}:8000/ws`;
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || `${protocol}://${window.location.hostname}:8000/ws`;
 
       ws = new WebSocket(wsUrl);
 
@@ -129,7 +129,7 @@ export default function WebhooksDashboard() {
               setJobDetails((prev) => (prev ? { ...prev, status: "verified" } : null));
               setLogs((prev) => [
                 ...prev,
-                { id: Date.now(), text: "\n[OK] ShadowPlane Verification Passed.", level: "success" },
+                { id: Date.now(), text: "\n[OK] ShadoPlane Verification Passed.", level: "success" },
               ]);
               break;
 
@@ -336,7 +336,7 @@ export default function WebhooksDashboard() {
               <span className="w-3 h-3 rounded-full bg-red-500/80" />
               <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
               <span className="w-3 h-3 rounded-full bg-green-500/80" />
-              <span className="text-xs text-zinc-500 font-mono ml-3">ShadowPlane Intercept Logs</span>
+              <span className="text-xs text-zinc-500 font-mono ml-3">ShadoPlane Intercept Logs</span>
             </div>
             
             {/* Logs Body */}

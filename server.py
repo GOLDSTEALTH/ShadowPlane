@@ -207,6 +207,20 @@ provider "aws" {
     def _build_env(self) -> dict:
         """Build an environment dict that forces all AWS calls to LocalStack."""
         env = os.environ.copy()
+        # Strip sensitive host environment variables
+        sensitive_vars = [
+            "GITHUB_TOKEN",
+            "GEMINI_API_KEY",
+            "OPENAI_API_KEY",
+            "ANTHROPIC_API_KEY",
+            "AWS_SESSION_TOKEN",
+            "AWS_SECURITY_TOKEN",
+            "SHADOWPLANE_RESET_TOKEN",
+            "SLACK_WEBHOOK_URL",
+        ]
+        for var in sensitive_vars:
+            env.pop(var, None)
+
         env["AWS_ACCESS_KEY_ID"] = "mock"
         env["AWS_SECRET_ACCESS_KEY"] = "mock"
         env["AWS_DEFAULT_REGION"] = "us-east-1"
@@ -470,6 +484,71 @@ async def clone_and_deploy(terraform_dir: str) -> str:
             )
         # Not yet tripped — return the normal error so the agent can try to fix it
         raise RuntimeError(f"Terraform execution failed: {result['error_log']}")
+
+@mcp.tool()
+async def verify_infrastructure(terraform_dir: str) -> str:
+    """Run full VerificationPipeline on a Terraform directory.
+
+    Runs VerificationPipeline (Init -> Checkov Security Scan -> Plan & Change-Risk Analysis -> LocalStack Deploy)
+    on terraform_dir inside asyncio.to_thread.
+    Returns a JSON string containing report.to_dict() plus "attestation_markdown": generate_markdown_attestation(report).
+
+    Args:
+        terraform_dir: Path to the directory containing Terraform files to verify.
+    """
+    logger.info("verify_infrastructure tool invoked with path: %s", terraform_dir)
+    target = os.path.abspath(terraform_dir)
+
+    def _execute_pipeline() -> str:
+        from engine.runner import IaCRunner, LocalStackConnector
+        from engine.docker_runner import DockerIaCRunner
+        from engine.security import CheckovValidator
+        from engine.pipeline import VerificationPipeline
+        from engine.attestation import generate_markdown_attestation
+        from engine.state_manager import StateSanitizer
+
+        use_docker = os.environ.get("SHADOWPLANE_USE_DOCKER", "1").lower() in ("1", "true")
+        docker_runner = DockerIaCRunner(connector=LocalStackConnector())
+        if use_docker and docker_runner.is_available:
+            runner = docker_runner
+        else:
+            runner = IaCRunner(
+                binary=os.environ.get("SHADOWPLANE_IAC_BINARY", "terraform"),
+                connector=LocalStackConnector(),
+            )
+
+        security = CheckovValidator()
+        sanitizer = StateSanitizer(target)
+        sanitizer.ingest_and_sanitize()
+        try:
+            commit_sha = None
+            try:
+                proc = subprocess.run(
+                    ["git", "rev-parse", "--short=12", "HEAD"],
+                    cwd=target,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+                if proc.returncode == 0 and proc.stdout.strip():
+                    commit_sha = proc.stdout.strip()
+            except Exception:
+                pass
+
+            pipeline = VerificationPipeline(
+                terraform_dir=target,
+                runner=runner,
+                security=security,
+                commit_sha=commit_sha,
+            )
+            report = pipeline.run()
+            res = report.to_dict()
+            res["attestation_markdown"] = generate_markdown_attestation(report)
+            return json.dumps(res, indent=2, default=str)
+        finally:
+            sanitizer.restore_backup()
+
+    return await asyncio.to_thread(_execute_pipeline)
 
 @mcp.tool()
 async def read_sandbox_logs(deployment_id: str) -> str:

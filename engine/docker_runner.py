@@ -99,9 +99,11 @@ class DockerIaCRunner:
         abs_target_dir = os.path.abspath(target_dir)
         container_env = self._build_container_env()
 
-        # Mount target directory into /workspace
+        # Mount target directory into /workspace (support sibling container mapping)
+        host_workspace = os.environ.get("SHADOWPLANE_HOST_WORKSPACE")
+        volume_source = host_workspace if host_workspace else abs_target_dir
         volumes = {
-            abs_target_dir: {
+            volume_source: {
                 "bind": self.WORKSPACE_DIR,
                 "mode": "rw",
             }
@@ -118,26 +120,32 @@ class DockerIaCRunner:
                 logger.info("Pulling sandbox image '%s'...", self.image)
                 self.client.images.pull(self.image)
 
-            container = self.client.containers.create(
-                image=self.image,
-                command=cmd,
-                working_dir=self.WORKSPACE_DIR,
-                environment=container_env,
-                volumes=volumes,
-                extra_hosts=extra_hosts,
-                network_mode="bridge",
-                mem_limit="1024m",
-                nano_cpus=2_000_000_000,  # 2 CPUs
-            )
+            create_kwargs = {
+                "image": self.image,
+                "command": cmd,
+                "working_dir": self.WORKSPACE_DIR,
+                "environment": container_env,
+                "volumes": volumes,
+                "extra_hosts": extra_hosts,
+                "network_mode": "bridge",
+                "mem_limit": "1024m",
+                "nano_cpus": 2_000_000_000,  # 2 CPUs
+                "cap_drop": ["ALL"],
+                "security_opt": ["no-new-privileges:true"],
+            }
+            if hasattr(os, "getuid"):
+                create_kwargs["user"] = f"{os.getuid()}:{os.getgid()}"
+
+            container = self.client.containers.create(**create_kwargs)
 
             try:
                 container.start()
                 res = container.wait(timeout=self.timeout)
                 exit_code = res.get("StatusCode", 0)
-                logs = container.logs(stdout=True, stderr=True).decode("utf-8", errors="replace")
-
-                stdout = logs if exit_code == 0 else ""
-                stderr = logs if exit_code != 0 else ""
+                stdout = container.logs(stdout=True, stderr=False).decode("utf-8", errors="replace")
+                stderr = container.logs(stdout=False, stderr=True).decode("utf-8", errors="replace")
+                if exit_code != 0 and not stderr.strip():
+                    stderr = stdout
 
                 return {
                     "success": exit_code == 0,

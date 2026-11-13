@@ -1,0 +1,49 @@
+name: "ShadowPlane IaC Verification Gateway"
+description: "ShadowPlane — IaC Verification Gateway. Verifies Terraform infrastructure in an isolated LocalStack sandbox with fail-closed security scanning and change-risk intelligence."
+author: "GOLDSTEALTH"
+
+inputs:
+  target-dir:
+    description: "Path to the Terraform directory to verify"
+    required: false
+    default: "./infra"
+  output-json:
+    description: "Filepath to export signed JSON attestation pack"
+    required: false
+    default: "shadowplane-attestation.json"
+  no-docker:
+    description: "Force host-level execution instead of Docker container runner"
+    required: false
+    default: "false"
+  pr:
+    description: "Optional Pull Request number for notifications"
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install ShadowPlane Dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip && pip install -e "${{ github.action_path }}"
+
+    - name: Run ShadowPlane Verification Pipeline
+      shell: bash
+      env:
+        INPUT_TARGET_DIR: ${{ inputs.target-dir }}
+        INPUT_OUTPUT_JSON: ${{ inputs.output-json }}
+        INPUT_NO_DOCKER: ${{ inputs.no-docker }}
+        INPUT_PR: ${{ inputs.pr }}
+      run: |
+        ARGS=(--target-dir "$INPUT_TARGET_DIR")
+        if [ -n "$INPUT_OUTPUT_JSON" ]; then
+          ARGS+=(--output-json "$INPUT_OUTPUT_JSON")
+        fi
+        if [ "$INPUT_NO_DOCKER" = "true" ]; then
+          ARGS+=(--no-docker)
+        fi
+        if [ -n "$INPUT_PR" ]; then
+          ARGS+=(--pr "$INPUT_PR")
+        fi
+        python "${{ github.action_path }}/cli.py" "${ARGS[@]}"

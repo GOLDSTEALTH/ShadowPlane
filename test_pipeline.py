@@ -126,6 +126,58 @@ class TestVerificationPipeline(unittest.TestCase):
         # Apply should NOT be invoked when risk is critical
         self.mock_runner.apply.assert_not_called()
 
+    def test_singular_action_delete_triggers_critical_risk(self):
+        """Singular 'action': 'delete' schema from terraform plan -json triggers CRITICAL risk and blocks deployment."""
+        self.mock_runner.init.return_value = {"success": True, "stderr": ""}
+        self.mock_security.scan.return_value = {"passed": True, "failed_checks": []}
+
+        mock_plan_event = json.dumps({
+            "type": "planned_change",
+            "change": {
+                "action": "delete",
+                "resource": {
+                    "resource_type": "aws_db_instance",
+                    "resource_address": "aws_db_instance.primary",
+                },
+            },
+        })
+        self.mock_runner.plan.return_value = {"success": True, "stdout": mock_plan_event, "stderr": ""}
+
+        report = self.pipeline.run()
+
+        self.assertEqual(report.plan_result, VerificationStatus.PASS)
+        self.assertEqual(report.change_risk.risk_score, "CRITICAL")
+        self.assertIn("aws_db_instance.primary", report.change_risk.high_risk_deletions)
+        self.assertEqual(report.deploy_result, VerificationStatus.BLOCKED)
+        self.assertFalse(report.success)
+        self.mock_runner.apply.assert_not_called()
+
+    def test_singular_action_replace_triggers_critical_risk(self):
+        """Singular 'action': 'replace' schema from terraform plan -json triggers CRITICAL risk and blocks deployment."""
+        self.mock_runner.init.return_value = {"success": True, "stderr": ""}
+        self.mock_security.scan.return_value = {"passed": True, "failed_checks": []}
+
+        mock_plan_event = json.dumps({
+            "type": "planned_change",
+            "change": {
+                "action": "replace",
+                "resource": {
+                    "resource_type": "aws_rds_cluster",
+                    "resource_address": "aws_rds_cluster.aurora_prod",
+                },
+            },
+        })
+        self.mock_runner.plan.return_value = {"success": True, "stdout": mock_plan_event, "stderr": ""}
+
+        report = self.pipeline.run()
+
+        self.assertEqual(report.plan_result, VerificationStatus.PASS)
+        self.assertEqual(report.change_risk.risk_score, "CRITICAL")
+        self.assertIn("aws_rds_cluster.aurora_prod", report.change_risk.high_risk_deletions)
+        self.assertEqual(report.deploy_result, VerificationStatus.BLOCKED)
+        self.assertFalse(report.success)
+        self.mock_runner.apply.assert_not_called()
+
     def test_iam_broadening_sets_high_risk(self):
         """Adding or updating IAM policies flags high risk."""
         self.mock_runner.init.return_value = {"success": True, "stderr": ""}

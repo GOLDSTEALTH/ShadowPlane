@@ -2,7 +2,6 @@ import os
 import sys
 from dotenv import load_dotenv
 
-from google import genai
 from engine.runner import IaCRunner, LocalStackConnector
 from engine.security import CheckovValidator
 from engine.state_manager import StateSanitizer
@@ -13,7 +12,7 @@ load_dotenv()
 
 class ShadowPlaneEngine:
     def __init__(self, target_dir: str, pr_number: str):
-        self.target_dir = target_dir
+        self.target_dir = os.path.abspath(target_dir)
         self.pr_number = pr_number
         self.log = get_logger("ShadowPlaneEngine")
         
@@ -28,23 +27,8 @@ class ShadowPlaneEngine:
             self.log.info("Initialized host-level IaCRunner.")
 
         self.security = CheckovValidator()
-        self.state_manager = StateSanitizer(target_dir)
+        self.state_manager = StateSanitizer(self.target_dir)
         self.notifier = SlackNotifier()
-        
-        api_key = os.environ.get("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY environment variable is required.")
-        self.llm_client = genai.Client(api_key=api_key)
-        self.model = "gemini-3.7-flash"
-        
-    def _sanitize_hcl(self, text: str) -> str:
-        text = text.strip()
-        if text.startswith("```"):
-            lines = text.splitlines()
-            if lines[0].startswith("```"): lines = lines[1:]
-            if lines[-1].startswith("```"): lines = lines[:-1]
-            text = "\n".join(lines)
-        return text
 
     def run_pipeline(self) -> bool:
         from engine.pipeline import VerificationPipeline, VerificationReport
@@ -66,9 +50,15 @@ class ShadowPlaneEngine:
             commit_sha = None
             try:
                 import subprocess
-                proc = subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.target_dir, capture_output=True, text=True, timeout=5)
+                proc = subprocess.run(
+                    ["git", "rev-parse", "--short=12", "HEAD"],
+                    cwd=self.target_dir,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
                 if proc.returncode == 0 and proc.stdout.strip():
-                    commit_sha = proc.stdout.strip()[:12]
+                    commit_sha = proc.stdout.strip()
             except Exception:
                 pass
 
@@ -96,9 +86,8 @@ class ShadowPlaneEngine:
             attestation_md = generate_markdown_attestation(report)
             
             # Send notification using the pipeline results
-            if report.success:
-                self.notifier.send_verification_success(self.pr_number, "ShadowPlane Verification Attestation", attestation_md)
-            else:
+            self.notifier.send_attestation_report(self.pr_number, attestation_md, report.success)
+            if not report.success:
                 self.log.warning("Pipeline Failed or Blocked. Attestation summary:\n%s", attestation_md)
             
             return report.success

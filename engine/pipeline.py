@@ -110,31 +110,48 @@ class VerificationPipeline:
 
     def _analyze_plan_for_risk(self, plan_stdout: str, report: VerificationReport):
         """Option C: Change-Risk Intelligence. Analyzes the JSON plan output."""
-        # The runner.plan outputs JSON lines or a single JSON block depending on TF version.
-        # We will parse it to find destructive actions and IAM changes.
-        high_risk_resources = ["aws_db_instance", "aws_s3_bucket", "aws_dynamodb_table", "aws_kms_key"]
+        high_risk_resources = {
+            "aws_db_instance",
+            "aws_rds_cluster",
+            "aws_s3_bucket",
+            "aws_dynamodb_table",
+            "aws_kms_key",
+            "aws_efs_file_system",
+        }
+        iam_resources = {
+            "aws_iam_policy",
+            "aws_iam_role_policy",
+            "aws_iam_role_policy_attachment",
+            "aws_iam_user_policy",
+            "aws_s3_bucket_policy",
+        }
         
         for line in plan_stdout.splitlines():
-            if not line.strip(): continue
+            if not line.strip():
+                continue
             try:
                 event = json.loads(line)
                 
                 # Check for Terraform JSON plan format
                 if event.get("type") == "planned_change":
                     change = event.get("change", {})
-                    actions = change.get("actions", [])
-                    resource_type = change.get("resource", {}).get("resource_type", "")
-                    resource_addr = change.get("resource", {}).get("resource_address", "")
+                    raw_actions = change.get("actions") or ([change["action"]] if "action" in change else [])
+                    actions = {a.lower() for a in raw_actions if isinstance(a, str)}
+                    resource = change.get("resource", {})
+                    resource_type = resource.get("resource_type", "")
+                    resource_addr = resource.get("resource_address", "")
                     
                     # Detect Destructive Actions on stateful resources
-                    if "delete" in actions and resource_type in high_risk_resources:
-                        report.change_risk.high_risk_deletions.append(resource_addr)
+                    if actions.intersection({"delete", "replace"}) and resource_type in high_risk_resources:
+                        if resource_addr and resource_addr not in report.change_risk.high_risk_deletions:
+                            report.change_risk.high_risk_deletions.append(resource_addr)
                         report.change_risk.risk_score = "CRITICAL"
                         
                     # Detect IAM permission broadening
-                    if resource_type in ["aws_iam_policy", "aws_iam_role_policy", "aws_iam_role_policy_attachment"]:
-                        if "create" in actions or "update" in actions:
-                            report.change_risk.iam_broadening.append(resource_addr)
+                    if resource_type in iam_resources:
+                        if actions.intersection({"create", "update", "replace"}):
+                            if resource_addr and resource_addr not in report.change_risk.iam_broadening:
+                                report.change_risk.iam_broadening.append(resource_addr)
                             if report.change_risk.risk_score != "CRITICAL":
                                 report.change_risk.risk_score = "HIGH"
 

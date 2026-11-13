@@ -20,8 +20,8 @@ dependencies = [
     "uvicorn",
     "httpx",
     "websockets",
-    "google-genai",
     "litellm",
+    "checkov>=3.2.0",
 ]
 
 [project.optional-dependencies]
@@ -37,10 +37,10 @@ shadowplane-server = "server:_cli_entry"
 shadowplane-engine = "main:_cli_entry"
 
 [tool.setuptools]
-py-modules = ["cli", "server", "main", "demo_loop", "circuit_breaker", "load_test", "web_server"]
+py-modules = ["cli", "server", "main", "demo_loop", "circuit_breaker", "web_server"]
 
 [tool.setuptools.packages.find]
-include = ["engine*", "skills*"]
+include = ["engine*"]
 
 [tool.setuptools.dynamic]
 version = {file = "VERSION"}

@@ -7,7 +7,9 @@
 
 # Terraform state (ephemeral, generated at runtime)
 .terraform/
+**/.terraform/
 .terraform.lock.hcl
+**/.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
 *localstack_override.tf

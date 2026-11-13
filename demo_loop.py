@@ -13,26 +13,26 @@ Max retries: 5
 """
 
 import asyncio
-import io
 import os
 import re
 import shutil
 import stat
 import sys
+import tempfile
 import uuid
 
-from google import genai
-from google.genai import types
-
 # Force UTF-8 output so box-drawing chars and emoji survive Windows terminals
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 # Resolve server.py from the same directory as this script
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from server import mcp  # noqa: E402
-from circuit_breaker import CircuitBreakerError
+from circuit_breaker import CircuitBreakerError  # noqa: E402
+from engine.ai import repair_terraform_code  # noqa: E402
 
-DEMO_INFRA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "demo-infra")
+DEFAULT_DEMO_INFRA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "demo-infra")
+DEMO_INFRA_DIR = DEFAULT_DEMO_INFRA_DIR
 MAIN_TF_PATH   = os.path.join(DEMO_INFRA_DIR, "main.tf")
 MAX_RETRIES    = 5
 
@@ -76,10 +76,10 @@ def _remove_readonly(func, path, _):
     except Exception:
         pass
 
-async def reset_terraform_state(yield_event=None):
+async def reset_terraform_state(infra_dir: str, yield_event=None):
     for item in (".terraform", "terraform.tfstate", "terraform.tfstate.backup",
                  ".terraform.lock.hcl", "localstack_override.tf"):
-        target = os.path.join(DEMO_INFRA_DIR, item)
+        target = os.path.join(infra_dir, item)
         if os.path.isdir(target):
             shutil.rmtree(target, onerror=_remove_readonly)
             await _log(yield_event, f"  [CLEAN] Removed directory  : {item}")
@@ -128,27 +128,31 @@ resource "aws_s3_bucket_policy" "shadowplane_policy" {{
 }}
 """
 
-async def reset_main_tf(yield_event=None):
+async def reset_main_tf(infra_dir: str, yield_event=None):
     content = MAIN_TF_TEMPLATE.format(
         broken=BROKEN_BUCKET,
         fixed=FIXED_BUCKET,
         run_id=RUN_ID,
     )
-    with open(MAIN_TF_PATH, "w", encoding="utf-8") as fh:
+    main_tf_path = os.path.join(infra_dir, "main.tf")
+    with open(main_tf_path, "w", encoding="utf-8") as fh:
         fh.write(content)
     await _log(yield_event, f"  [RESET] main.tf written  — broken bucket = {BROKEN_BUCKET!r}")
     await _log(yield_event, f"  [INFO]  Run ID = {RUN_ID}  |  Fixed bucket will be = {FIXED_BUCKET!r}")
 
-from engine.ai import repair_terraform_code
-
-async def fix_main_tf(error_text: str, ai_model: str, ai_base_url: str = None, yield_event=None) -> bool:
+async def fix_main_tf(infra_dir: str, error_text: str, ai_model: str, ai_base_url: str = None, yield_event=None) -> bool:
     """
     Use the unified AI Engine (LiteLLM) to dynamically analyse and repair broken Terraform code.
     """
     await _log(yield_event, f"\n  [ANALYSE] Invoking AI ({ai_model}) to diagnose and repair Terraform error...")
 
+    main_tf_path = os.path.join(infra_dir, "main.tf")
+    if not os.path.isfile(main_tf_path):
+        await _log(yield_event, f"  [WARN]    No main.tf found in {infra_dir}", "warn")
+        return False
+
     # Read current (broken) content
-    with open(MAIN_TF_PATH, "r", encoding="utf-8") as fh:
+    with open(main_tf_path, "r", encoding="utf-8") as fh:
         original = fh.read()
 
     patched = await repair_terraform_code(
@@ -167,7 +171,7 @@ async def fix_main_tf(error_text: str, ai_model: str, ai_base_url: str = None, y
         return False
 
     # Write the patched code to disk
-    with open(MAIN_TF_PATH, "w", encoding="utf-8") as fh:
+    with open(main_tf_path, "w", encoding="utf-8") as fh:
         fh.write(patched)
 
     await _log(yield_event, "  [FIX]     AI patch applied successfully.", "success")
@@ -199,138 +203,134 @@ async def main(yield_event=None, target_dir=None, max_retries=None, ai_model="ge
     Returns:
         True if verification passed, False otherwise.
     """
-    global RUN_ID, FIXED_BUCKET, DEMO_INFRA_DIR, MAIN_TF_PATH, MAX_RETRIES
+    global RUN_ID, FIXED_BUCKET
     # Regenerate RUN_ID on each invocation
     RUN_ID = uuid.uuid4().hex[:6]
     FIXED_BUCKET = f"shadowplane-demo-{RUN_ID}"
 
-    # Allow caller overrides
-    if target_dir is not None:
-        DEMO_INFRA_DIR = os.path.abspath(target_dir)
-        MAIN_TF_PATH = os.path.join(DEMO_INFRA_DIR, "main.tf")
-    if max_retries is not None:
-        MAX_RETRIES = max_retries
+    max_attempts = max_retries if max_retries is not None else MAX_RETRIES
 
-    divider = "=" * 67
-    thin    = "-" * 55
-
-    await _log(yield_event, f"\n+{divider}+")
-    await _log(yield_event, "|  *** ShadowPlane CI/CD Interceptor — Autonomous Verification ***  |")
-    await _log(yield_event, f"+{divider}+")
-    await _log(yield_event, f"|  Target      : {DEMO_INFRA_DIR}")
-    await _log(yield_event, f"|  Run ID      : {RUN_ID}")
-    await _log(yield_event, f"|  Max Retries : {MAX_RETRIES}")
-    await _log(yield_event, f"+{divider}+\n")
-
-    await _emit(yield_event, {"type": "step", "step": "preflight"})
-    
-    if github_repo and pr_branch:
-        import tempfile
-        from engine.git_utils import clone_and_checkout, checkout_branch
-        await _log(yield_event, f"\n[STEP 0] PRE-WARM SANDBOX")
-        await _log(yield_event, f"  -> Cloning {github_repo} into sandbox...")
-        repo_url = f"https://github.com/{github_repo}.git"
-        workspace_dir = os.path.join(tempfile.gettempdir(), f"shadowplane-{RUN_ID}")
-        
-        success = clone_and_checkout(repo_url, base_branch, pr_branch, workspace_dir)
-        if not success:
-            raise Exception("Git Clone Failed")
+    workspace_dir = None
+    try:
+        if github_repo and pr_branch:
+            from engine.git_utils import clone_and_checkout, checkout_branch
+            await _log(yield_event, f"\n[STEP 0] PRE-WARM SANDBOX")
+            await _log(yield_event, f"  -> Cloning {github_repo} into sandbox...")
+            repo_url = f"https://github.com/{github_repo}.git"
+            workspace_dir = os.path.join(tempfile.gettempdir(), f"shadowplane-{RUN_ID}")
             
-        DEMO_INFRA_DIR = workspace_dir
-        MAIN_TF_PATH = os.path.join(DEMO_INFRA_DIR, "main.tf")
-        
-        await _log(yield_event, f"  -> Pre-Warming Base Branch ({base_branch})...")
-        try:
-            await mcp.call_tool("clone_and_deploy", {"terraform_dir": DEMO_INFRA_DIR})
-            await _log(yield_event, "  -> Pre-Warm Successful. Mock production state created.", "success")
-        except Exception as e:
-            await _log(yield_event, f"  [WARN] Pre-warm apply failed: {str(e)[:200]}. Proceeding with clean state...", "warn")
+            success = clone_and_checkout(repo_url, base_branch, pr_branch, workspace_dir)
+            if not success:
+                raise Exception("Git Clone Failed")
+                
+            infra_dir = workspace_dir
             
-        await _log(yield_event, f"\n[STEP 1] TRANSITION TO PR BRANCH ({pr_branch})")
-        checkout_success = checkout_branch(workspace_dir, pr_branch)
-        if not checkout_success:
-            await _log(yield_event, f"  [ERROR] Failed to checkout PR branch '{pr_branch}'. Aborting.", "error")
-            return False
-    else:
-        # Determine if we're running against the built-in demo directory
-        builtin_demo_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "demo-infra")
-        is_demo_mode = os.path.normcase(os.path.abspath(DEMO_INFRA_DIR)) == os.path.normcase(os.path.abspath(builtin_demo_dir))
-        
-        if is_demo_mode:
-            await _log(yield_event, "[PRE-FLIGHT] Resetting demo environment for a clean run...")
-            await reset_terraform_state(yield_event)
-            await reset_main_tf(yield_event)
-        else:
-            await _log(yield_event, "[PRE-FLIGHT] Verifying user-supplied infrastructure directory...")
-            if not os.path.isdir(DEMO_INFRA_DIR):
-                await _log(yield_event, f"  [ERROR] Target directory does not exist: {DEMO_INFRA_DIR}", "error")
-                return False
-            tf_files = [f for f in os.listdir(DEMO_INFRA_DIR) if f.endswith('.tf')]
-            if not tf_files:
-                await _log(yield_event, f"  [ERROR] No .tf files found in: {DEMO_INFRA_DIR}", "error")
-                return False
-            await _log(yield_event, f"  [OK] Found {len(tf_files)} Terraform file(s). Proceeding without reset.")
-    await _log(yield_event, "")
-
-    success = False
-
-    for attempt in range(1, MAX_RETRIES + 1):
-        if attempt == 1:
-            await _emit(yield_event, {"type": "step", "step": "attempt1"})
-        else:
-            await _emit(yield_event, {"type": "step", "step": "attempt2"})
-
-        await _log(yield_event, f"\n+--- Attempt {attempt}/{MAX_RETRIES} {thin}")
-        await _log(yield_event, "|  [RUN]  Triggering clone_and_deploy()...")
-
-        try:
-            result = await mcp.call_tool("clone_and_deploy", {"terraform_dir": DEMO_INFRA_DIR})
-            output  = extract_result_text(result)
-            preview = output[:500].replace("\n", "\n|        ")
-            await _log(yield_event, f"|\n|  [OUTPUT] Terraform stdout:\n|        {preview}\n|")
-
-            await _log(yield_event, f"\n+{divider}+")
-            await _log(yield_event, "|                                                                    |")
-            await _log(yield_event, "|  [PASS] ShadowPlane Verification Passed.                           |", "success")
-            await _log(yield_event, "|        Blast Radius Contained. Generating PR.                      |")
-            await _log(yield_event, "|                                                                    |")
-            await _log(yield_event, f"+{divider}+\n")
-            success = True
-            break
-
-        except CircuitBreakerError as cb_err:
-            await _log(yield_event, f"|  [BLOCKED] Circuit breaker tripped — execution halted.", "error")
-            await _log(yield_event, f"|  {str(cb_err)[:300]}\n|", "error")
-            await _log(yield_event, f"+--- [HALT] Circuit breaker active. Human intervention required.\n", "error")
-            break
-
-        except Exception as deploy_err:
-            err_short = str(deploy_err)[:300]
-            await _log(yield_event, f"|  [FAIL]   Deployment failed:\n|           {err_short}\n|", "error")
-
-            await _log(yield_event, "|  [LOGS]   Reading sandbox logs via read_sandbox_logs()...")
+            await _log(yield_event, f"  -> Pre-Warming Base Branch ({base_branch})...")
             try:
-                logs_result = await mcp.call_tool("read_sandbox_logs", {"deployment_id": "latest"})
-                error_text  = extract_result_text(logs_result)
-                log_preview = error_text[:700].replace("\n", "\n|        ")
-                await _log(yield_event, f"|\n|  [STDERR] Captured Terraform Error:\n|        {log_preview}\n|", "error")
-            except Exception as log_err:
-                error_text = str(deploy_err)
-                await _log(yield_event, f"|  [WARN]   Could not read sandbox logs: {log_err}\n|", "warn")
-
-            if attempt < MAX_RETRIES:
-                await _emit(yield_event, {"type": "step", "step": "analysis"})
-                fixed = await fix_main_tf(error_text, ai_model, ai_base_url, yield_event)
-                if not fixed:
-                    await _log(yield_event, f"+--- [HALT] No auto-repair available. Halting loop.\n", "error")
-                    break
-                await _log(yield_event, f"|  [RETRY]  Infrastructure patched — retrying deployment...\n+{thin}\n")
+                await mcp.call_tool("clone_and_deploy", {"terraform_dir": infra_dir})
+                await _log(yield_event, "  -> Pre-Warm Successful. Mock production state created.", "success")
+            except Exception as e:
+                await _log(yield_event, f"  [WARN] Pre-warm apply failed: {str(e)[:200]}. Proceeding with clean state...", "warn")
+                
+            await _log(yield_event, f"\n[STEP 1] TRANSITION TO PR BRANCH ({pr_branch})")
+            checkout_success = checkout_branch(workspace_dir, pr_branch)
+            if not checkout_success:
+                await _log(yield_event, f"  [ERROR] Failed to checkout PR branch '{pr_branch}'. Aborting.", "error")
+                return False
+        else:
+            infra_dir = os.path.abspath(target_dir) if target_dir is not None else DEFAULT_DEMO_INFRA_DIR
+            is_demo_mode = os.path.normcase(os.path.abspath(infra_dir)) == os.path.normcase(os.path.abspath(DEFAULT_DEMO_INFRA_DIR))
+            
+            if is_demo_mode:
+                await _log(yield_event, "[PRE-FLIGHT] Resetting demo environment for a clean run...")
+                await reset_terraform_state(infra_dir, yield_event)
+                await reset_main_tf(infra_dir, yield_event)
             else:
-                await _log(yield_event, f"+--- [HALT] Max retries ({MAX_RETRIES}) reached. Verification failed.\n", "error")
+                await _log(yield_event, "[PRE-FLIGHT] Verifying user-supplied infrastructure directory...")
+                if not os.path.isdir(infra_dir):
+                    await _log(yield_event, f"  [ERROR] Target directory does not exist: {infra_dir}", "error")
+                    return False
+                tf_files = [f for f in os.listdir(infra_dir) if f.endswith('.tf')]
+                if not tf_files:
+                    await _log(yield_event, f"  [ERROR] No .tf files found in: {infra_dir}", "error")
+                    return False
+                await _log(yield_event, f"  [OK] Found {len(tf_files)} Terraform file(s). Proceeding without reset.")
 
-    return success
+        divider = "=" * 67
+        thin    = "-" * 55
+
+        await _log(yield_event, f"\n+{divider}+")
+        await _log(yield_event, "|  *** ShadowPlane CI/CD Interceptor — Autonomous Verification ***  |")
+        await _log(yield_event, f"+{divider}+")
+        await _log(yield_event, f"|  Target      : {infra_dir}")
+        await _log(yield_event, f"|  Run ID      : {RUN_ID}")
+        await _log(yield_event, f"|  Max Retries : {max_attempts}")
+        await _log(yield_event, f"+{divider}+\n")
+
+        await _emit(yield_event, {"type": "step", "step": "preflight"})
+        await _log(yield_event, "")
+
+        success = False
+
+        for attempt in range(1, max_attempts + 1):
+            if attempt == 1:
+                await _emit(yield_event, {"type": "step", "step": "attempt1"})
+            else:
+                await _emit(yield_event, {"type": "step", "step": "attempt2"})
+
+            await _log(yield_event, f"\n+--- Attempt {attempt}/{max_attempts} {thin}")
+            await _log(yield_event, "|  [RUN]  Triggering clone_and_deploy()...")
+
+            try:
+                result = await mcp.call_tool("clone_and_deploy", {"terraform_dir": infra_dir})
+                output  = extract_result_text(result)
+                preview = output[:500].replace("\n", "\n|        ")
+                await _log(yield_event, f"|\n|  [OUTPUT] Terraform stdout:\n|        {preview}\n|")
+
+                await _log(yield_event, f"\n+{divider}+")
+                await _log(yield_event, "|                                                                    |")
+                await _log(yield_event, "|  [PASS] ShadowPlane Verification Passed.                           |", "success")
+                await _log(yield_event, "|        Blast Radius Contained. Generating PR.                      |")
+                await _log(yield_event, "|                                                                    |")
+                await _log(yield_event, f"+{divider}+\n")
+                success = True
+                break
+
+            except CircuitBreakerError as cb_err:
+                await _log(yield_event, f"|  [BLOCKED] Circuit breaker tripped — execution halted.", "error")
+                await _log(yield_event, f"|  {str(cb_err)[:300]}\n|", "error")
+                await _log(yield_event, f"+--- [HALT] Circuit breaker active. Human intervention required.\n", "error")
+                break
+
+            except Exception as deploy_err:
+                err_short = str(deploy_err)[:300]
+                await _log(yield_event, f"|  [FAIL]   Deployment failed:\n|           {err_short}\n|", "error")
+
+                await _log(yield_event, "|  [LOGS]   Reading sandbox logs via read_sandbox_logs()...")
+                try:
+                    logs_result = await mcp.call_tool("read_sandbox_logs", {"deployment_id": "latest"})
+                    error_text  = extract_result_text(logs_result)
+                    log_preview = error_text[:700].replace("\n", "\n|        ")
+                    await _log(yield_event, f"|\n|  [STDERR] Captured Terraform Error:\n|        {log_preview}\n|", "error")
+                except Exception as log_err:
+                    error_text = str(deploy_err)
+                    await _log(yield_event, f"|  [WARN]   Could not read sandbox logs: {log_err}\n|", "warn")
+
+                if attempt < max_attempts:
+                    await _emit(yield_event, {"type": "step", "step": "analysis"})
+                    fixed = await fix_main_tf(infra_dir, error_text, ai_model, ai_base_url, yield_event)
+                    if not fixed:
+                        await _log(yield_event, f"+--- [HALT] No auto-repair available. Halting loop.\n", "error")
+                        break
+                    await _log(yield_event, f"|  [RETRY]  Infrastructure patched — retrying deployment...\n+{thin}\n")
+                else:
+                    await _log(yield_event, f"+--- [HALT] Max retries ({max_attempts}) reached. Verification failed.\n", "error")
+
+        return success
+    finally:
+        if workspace_dir and os.path.exists(workspace_dir):
+            shutil.rmtree(workspace_dir, onerror=_remove_readonly)
 
 if __name__ == "__main__":
     result = asyncio.run(main())
     sys.exit(0 if result else 1)
-

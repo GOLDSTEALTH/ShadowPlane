@@ -20,8 +20,12 @@ export default function Home() {
         </div>
 
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 md:pt-24 pb-12 sm:pb-16 text-center">
-          <div className="text-4xl xs:text-5xl sm:text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-zinc-500 tracking-tight sm:tracking-tighter mb-4 sm:mb-6 break-words max-w-full">
-            ShadowPlane
+          <div className="flex justify-center mb-6 sm:mb-8">
+            <img 
+              src="/shadoplane-logo.png" 
+              alt="ShadoPlane" 
+              className="h-20 sm:h-28 md:h-36 w-auto max-w-full object-contain drop-shadow-[0_0_35px_rgba(6,182,212,0.35)]" 
+            />
           </div>
           <p className="text-xs sm:text-sm text-cyan-500 font-medium tracking-wide mb-4 sm:mb-6 uppercase">
             Autonomous CI/CD Gatekeeper
@@ -94,7 +98,7 @@ export default function Home() {
       <footer className="border-t border-zinc-800/60 py-8 bg-zinc-950">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div className="text-xs sm:text-sm text-zinc-500 text-center sm:text-left w-full sm:w-auto">
-            <span>ShadowPlane</span>{" "}
+            <span>ShadoPlane</span>{" "}
             <span className="text-zinc-700">·</span>{" "}
             <span>© {new Date().getFullYear()} GOLDSTEALTH</span>
           </div>
@@ -106,7 +110,7 @@ export default function Home() {
             <span className="text-zinc-700 select-none">·</span>
             <span>LocalStack</span>
             <span className="text-zinc-700 select-none">·</span>
-            <span>ShadowPatch</span>
+            <span>Checkov</span>
           </div>
         </div>
       </footer>

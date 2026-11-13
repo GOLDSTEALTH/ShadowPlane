@@ -1,6 +1,8 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import asyncio
 import time
-import os
 from dotenv import load_dotenv
 from engine.ai import repair_terraform_code
 

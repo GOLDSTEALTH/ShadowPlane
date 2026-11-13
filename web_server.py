@@ -272,9 +272,16 @@ async def webhook(request: Request):
     """
     body = await request.body()
 
-    # Signature verification (skip if no secret is configured — dev mode)
+    # Signature verification
     secret = _env("GITHUB_WEBHOOK_SECRET")
-    if secret and secret != "your_webhook_secret_here":
+    allow_unsigned = os.environ.get("SHADOWPLANE_ALLOW_UNSIGNED_WEBHOOKS") == "1"
+    if not secret or secret == "your_webhook_secret_here":
+        if not allow_unsigned:
+            raise HTTPException(
+                status_code=503,
+                detail="GITHUB_WEBHOOK_SECRET is required. Set SHADOWPLANE_ALLOW_UNSIGNED_WEBHOOKS=1 for local dev.",
+            )
+    else:
         signature = request.headers.get("X-Hub-Signature-256")
         if not verify_signature(body, signature, secret):
             raise HTTPException(status_code=403, detail="Invalid webhook signature")
