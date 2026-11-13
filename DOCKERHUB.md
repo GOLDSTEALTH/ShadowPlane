@@ -1,6 +1,6 @@
 # ShadoPlane - IaC Containment Firewall & Verification Gateway
 
-[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://hub.docker.com/r/goldsteatlh/shadoplane) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/GOLDSTEALTH/ShadowPlane/blob/main/LICENSE) [![GitHub](https://img.shields.io/badge/GitHub-Repository-black?logo=github)](https://github.com/GOLDSTEALTH/ShadowPlane)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://hub.docker.com/r/goldstealth/shadoplane) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/GOLDSTEALTH/ShadowPlane/blob/main/LICENSE) [![GitHub](https://img.shields.io/badge/GitHub-Repository-black?logo=github)](https://github.com/GOLDSTEALTH/ShadowPlane)
 
 ShadoPlane is a deterministic Infrastructure as Code (IaC) containment firewall and verification gateway designed for Agentic DevOps.
 
@@ -64,9 +64,9 @@ ShadoPlane establishes an enforceable verification boundary:
 ### 1. Pull the Image
 
 ```bash
-docker pull goldsteatlh/shadoplane:latest
+docker pull goldstealth/shadoplane:latest
 # Or pin to specific release tag:
-docker pull goldsteatlh/shadoplane:2.1.0
+docker pull goldstealth/shadoplane:2.1.0
 ```
 
 ### 2. Verify Infrastructure Locally
@@ -78,7 +78,7 @@ Mount the Docker socket (allowing ShadoPlane to manage LocalStack emulation) and
 docker run --rm \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $(pwd)/infra:/workspace \
-  goldsteatlh/shadoplane:2.1.0 \
+  goldstealth/shadoplane:2.1.0 \
   --target-dir /workspace \
   --output-json /workspace/attestation.json
 ```
@@ -88,7 +88,7 @@ docker run --rm \
 docker run --rm `
   -v //var/run/docker.sock:/var/run/docker.sock `
   -v ${PWD}/infra:/workspace `
-  goldsteatlh/shadoplane:2.1.0 `
+  goldstealth/shadoplane:2.1.0 `
   --target-dir /workspace `
   --output-json /workspace/attestation.json
 ```
@@ -141,7 +141,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run ShadoPlane Verification
-        uses: docker://goldsteatlh/shadoplane:2.1.0
+        uses: docker://goldstealth/shadoplane:2.1.0
         with:
           args: --target-dir ./infra --output-json attestation.json
         env:

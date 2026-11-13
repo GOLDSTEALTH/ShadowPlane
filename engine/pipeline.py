@@ -14,6 +14,9 @@ from dataclasses import dataclass, field, asdict
 from enum import Enum
 from typing import Optional, Dict, Any, List
 
+from engine.runner import IaCRunner, ensure_localstack_sync
+from engine.docker_runner import DockerIaCRunner
+
 logger = logging.getLogger("ShadowPlane-Pipeline")
 
 class VerificationStatus(Enum):
@@ -188,6 +191,14 @@ class VerificationPipeline:
 
         # Stage 3: Plan & Risk Analysis (Option C)
         logger.info("[3/4] Plan & Risk Analysis")
+        is_mock = (
+            getattr(self.runner, "_is_mock", False)
+            or type(self.runner).__module__.startswith("unittest.mock")
+            or not isinstance(self.runner, (IaCRunner, DockerIaCRunner))
+        )
+        if not is_mock and os.environ.get("SHADOWPLANE_AUTO_START_LOCALSTACK", "1").lower() in ("1", "true"):
+            ensure_localstack_sync()
+
         plan_res = self.runner.plan(self.terraform_dir)
         if not plan_res["success"]:
             report.plan_result = VerificationStatus.FAIL

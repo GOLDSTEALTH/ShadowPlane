@@ -4,7 +4,7 @@ import { useState } from "react";
 
 export default function Quickstart() {
   const [copied, setCopied] = useState(false);
-  const code = `# Install the CLI globally\npip install -e .\n\n# Start the Webhook Interceptor\nshadoplane-server\n\n# Or run manual tests with any model (BYOM)\nshadoplane --target-dir ./demo-infra --ai-model gpt-4o`;
+  const code = `# Install the CLI globally\npip install -e .\n\n# Start the Webhook Interceptor\nshadoplane-server\n\n# Verify infrastructure and export signed attestation\nshadoplane --target-dir ./demo-infra --output-json attestation.json`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
@@ -78,9 +78,9 @@ export default function Quickstart() {
             <br />
             <span className="text-emerald-400">shadoplane-server</span>
             <br /><br />
-            <span className="text-zinc-500"># Or run manual tests with any model (BYOM)</span>
+            <span className="text-zinc-500"># Verify infrastructure and export signed attestation</span>
             <br />
-            <span className="text-emerald-400">shadoplane</span> --target-dir ./demo-infra --ai-model <span className="text-yellow-400">gpt-4o</span>
+            <span className="text-emerald-400">shadoplane</span> --target-dir ./demo-infra --output-json <span className="text-cyan-400">attestation.json</span>
           </div>
         </div>
       </div>

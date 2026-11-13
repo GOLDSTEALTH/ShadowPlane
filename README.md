@@ -187,7 +187,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: ShadoPlane Gatekeeper
-        uses: docker://goldsteatlh/shadoplane:2.1.0
+        uses: docker://goldstealth/shadoplane:2.1.0
         with:
           args: --target-dir ./infra --output-json attestation.json
         env:
@@ -215,7 +215,7 @@ To run the gatekeeper locally on your workstation to test infrastructure patches
 docker run --rm \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $(pwd)/infra:/workspace \
-  goldsteatlh/shadoplane:2.1.0 \
+  goldstealth/shadoplane:2.1.0 \
   --target-dir /workspace \
   --output-json /workspace/attestation.json
 ```
@@ -224,7 +224,7 @@ docker run --rm \
 
 ShadoPlane strictly follows [Semantic Versioning (SemVer)](https://semver.org/). 
 
-The current version is defined in the `VERSION` file. When referencing ShadoPlane in your CI/CD pipelines, **always pin your workflows to a specific major/minor tag** (e.g., `docker://goldsteatlh/shadoplane:2.1.0` or `GOLDSTEALTH/ShadowPlane@v2.1.0`) to prevent breaking changes from interrupting your deployments.
+The current version is defined in the `VERSION` file. When referencing ShadoPlane in your CI/CD pipelines, **always pin your workflows to a specific major/minor tag** (e.g., `docker://goldstealth/shadoplane:2.1.0` or `GOLDSTEALTH/ShadowPlane@v2.1.0`) to prevent breaking changes from interrupting your deployments.
 
 ## Development
 

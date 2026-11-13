@@ -54,7 +54,7 @@ export default function TerminalDiff() {
           </span>
           <div className="flex-1" />
           <span className="text-[9px] sm:text-[10px] text-cyan-500 font-mono tracking-wider shrink-0 hidden xs:inline-block">
-            SHADOWPATCH APPLIED
+            VERIFICATION ATTESTED
           </span>
         </div>
 

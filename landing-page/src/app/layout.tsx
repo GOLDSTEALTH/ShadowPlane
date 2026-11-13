@@ -66,7 +66,7 @@ export default function RootLayout({
     applicationCategory: "DeveloperApplication",
     operatingSystem: "Web, Docker, Linux",
     description:
-      "The Flight Simulator for Terraform. An enterprise-grade CI/CD policy engine that intercepts broken Terraform configurations, sandboxes them in LocalStack, and auto-heals AWS API failures via the autonomous ShadowPatch engine.",
+      "The Flight Simulator for Terraform. An enterprise-grade CI/CD policy engine that intercepts broken Terraform configurations, sandboxes them in LocalStack, and enforces fail-closed security scanning and Change-Risk Intelligence.",
   };
 
   return (

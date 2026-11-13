@@ -1,12 +1,129 @@
 import subprocess
 import os
 import sys
+import logging
+import time
+import socket
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 
 # Add parent directory to path so we can import circuit_breaker
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from circuit_breaker import circuit_breaker, SYSTEM_OVERRIDE_MESSAGE
+from engine.constants import LOCALSTACK_SERVICES
+
+logger = logging.getLogger("ShadoPlane-Runner")
+
+
+def _load_env_file():
+    """Lightweight custom parser to load key-value pairs from root .env into os.environ."""
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    env_path = os.path.join(project_root, ".env")
+    if os.path.exists(env_path):
+        try:
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    if "=" in line:
+                        key, val = line.split("=", 1)
+                        key = key.strip()
+                        val = val.strip().strip("'\"")
+                        if key not in os.environ or os.environ[key] == "your_actual_token_here":
+                            os.environ[key] = val
+        except Exception as e:
+            logger.error("Failed to read .env file: %s", e)
+
+
+def ensure_localstack_sync():
+    """Sync helper to check/start LocalStack container."""
+    try:
+        import docker
+    except ImportError:
+        logger.warning("docker python library not installed — skipping LocalStack auto-start.")
+        return
+
+    try:
+        client = docker.from_env()
+        client.ping()
+    except Exception as e:
+        logger.warning("Docker daemon is not available (%s) — skipping LocalStack auto-start.", e)
+        return
+
+    container_name = "localstack-shadowplane"
+    _load_env_file()
+
+    auth_token = os.environ.get("LOCALSTACK_AUTH_TOKEN")
+    if auth_token == "your_actual_token_here":
+        auth_token = None
+
+    container_env = {}
+    if auth_token:
+        container_env["LOCALSTACK_AUTH_TOKEN"] = auth_token
+        container_env["ACTIVATE_PRO"] = "1"
+        logger.info("LocalStack Auth Token found in environment. Activating Pro mode.")
+
+    logger.info("Checking LocalStack container status...")
+    recreate = False
+    try:
+        container = client.containers.get(container_name)
+        env_vars = container.attrs.get("Config", {}).get("Env", [])
+        has_token_in_container = any(e.startswith("LOCALSTACK_AUTH_TOKEN=") for e in env_vars)
+
+        if auth_token and not has_token_in_container:
+            logger.info("Existing container does not have LOCALSTACK_AUTH_TOKEN set. Recreating...")
+            recreate = True
+        elif not auth_token and has_token_in_container:
+            logger.info("Existing container has LOCALSTACK_AUTH_TOKEN set, but none in host. Recreating...")
+            recreate = True
+
+        if recreate:
+            logger.info("Stopping and removing container '%s' to recreate it", container_name)
+            try:
+                container.stop(timeout=5)
+            except Exception:
+                pass
+            container.remove()
+            raise docker.errors.NotFound("Recreating container")
+
+        logger.info("Found existing container '%s' with status: %s", container_name, container.status)
+        if container.status != "running":
+            logger.info("Starting stopped container '%s'", container_name)
+            container.start()
+            time.sleep(5)
+    except docker.errors.NotFound:
+        logger.info("Container '%s' not found or recreating. Starting a new one...", container_name)
+        try:
+            client.containers.run(
+                "localstack/localstack:latest",
+                name=container_name,
+                ports={"4566/tcp": 4566},
+                environment=container_env,
+                detach=True,
+            )
+            time.sleep(10)
+        except Exception as e:
+            logger.warning("Failed to launch LocalStack container: %s", e)
+            return
+    except Exception as e:
+        logger.warning("Error checking LocalStack container: %s", e)
+        return
+
+    logger.info("Waiting for LocalStack port 4566 to become ready...")
+    port_ready = False
+    for _ in range(30):
+        try:
+            with socket.create_connection(("127.0.0.1", 4566), timeout=1):
+                logger.info("LocalStack port 4566 is ready!")
+                port_ready = True
+                break
+        except (socket.timeout, ConnectionRefusedError, OSError):
+            time.sleep(1)
+
+    if not port_ready:
+        logger.warning("LocalStack port 4566 did not become ready in 30 seconds. Continuing anyway.")
+
 
 class EmulatorConnector(ABC):
     @abstractmethod

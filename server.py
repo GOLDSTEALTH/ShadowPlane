@@ -9,6 +9,7 @@ import socket
 import time
 from mcp.server.fastmcp import FastMCP
 from circuit_breaker import circuit_breaker, SYSTEM_OVERRIDE_MESSAGE, CircuitBreakerError
+from engine.runner import ensure_localstack_sync
 
 # Configure logging to write to stderr so it does not interfere with the stdin/stdout communication channel of MCP
 logging.basicConfig(
@@ -64,81 +65,6 @@ def store_log(deployment_id: str, terraform_dir: str, stdout: str, stderr: str):
     latest_deployment_id = deployment_id
     logger.info("Stored logs for deployment_id: %s (dir: %s)", deployment_id, norm_dir)
 
-def ensure_localstack_sync():
-    """Sync helper to check/start LocalStack container."""
-    import docker
-    client = docker.from_env()
-    container_name = "localstack-shadowplane"
-    
-    # Reload env just in case it was updated during server runtime
-    load_env_file()
-    
-    # Read token from host environment
-    auth_token = os.environ.get("LOCALSTACK_AUTH_TOKEN")
-    # If the user kept the placeholder, treat it as empty
-    if auth_token == "your_actual_token_here":
-        auth_token = None
-        
-    container_env = {}
-    if auth_token:
-        container_env["LOCALSTACK_AUTH_TOKEN"] = auth_token
-        container_env["ACTIVATE_PRO"] = "1"
-        logger.info("LocalStack Auth Token found in environment. Activating Pro mode.")
-
-    logger.info("Checking LocalStack container status...")
-    recreate = False
-    try:
-        container = client.containers.get(container_name)
-        # Check if environment matches auth token setting
-        env_vars = container.attrs.get("Config", {}).get("Env", [])
-        has_token_in_container = any(e.startswith("LOCALSTACK_AUTH_TOKEN=") for e in env_vars)
-        
-        if auth_token and not has_token_in_container:
-            logger.info("Existing container does not have LOCALSTACK_AUTH_TOKEN set. Recreating...")
-            recreate = True
-        elif not auth_token and has_token_in_container:
-            logger.info("Existing container has LOCALSTACK_AUTH_TOKEN set, but none in host. Recreating...")
-            recreate = True
-            
-        if recreate:
-            logger.info("Stopping and removing container '%s' to recreate it", container_name)
-            try:
-                container.stop(timeout=5)
-            except Exception:
-                pass
-            container.remove()
-            raise docker.errors.NotFound("Recreating container")
-            
-        logger.info("Found existing container '%s' with status: %s", container_name, container.status)
-        if container.status != "running":
-            logger.info("Starting stopped container '%s'", container_name)
-            container.start()
-            time.sleep(5)
-    except docker.errors.NotFound:
-        logger.info("Container '%s' not found or recreating. Starting a new one...", container_name)
-        client.containers.run(
-            "localstack/localstack:latest",
-            name=container_name,
-            ports={"4566/tcp": 4566},
-            environment=container_env,
-            detach=True
-        )
-        time.sleep(10)
-
-    # Wait up to 30 seconds for the LocalStack port to be ready
-    logger.info("Waiting for LocalStack port 4566 to become ready...")
-    port_ready = False
-    for _ in range(30):
-        try:
-            with socket.create_connection(("127.0.0.1", 4566), timeout=1):
-                logger.info("LocalStack port 4566 is ready!")
-                port_ready = True
-                break
-        except (socket.timeout, ConnectionRefusedError):
-            time.sleep(1)
-            
-    if not port_ready:
-        logger.warning("LocalStack port 4566 did not become ready in 30 seconds. Continuing anyway.")
 
 class TerraformExecutor:
     """
